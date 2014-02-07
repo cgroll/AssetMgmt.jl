@@ -1,0 +1,180 @@
+#################################
+## definition Investments type ##
+#################################
+
+type Investments{T}
+    vals::DataFrame
+    idx::Array{T, 1}
+
+    function Investments(vals::DataFrame, idx::Array{T, 1})
+        TimeData.chkIdx(idx)
+        TimeData.chkNum(vals)
+        chkEqualsOne(vals)
+        if(size(vals, 1) != length(idx))
+            if (length(idx) == 0) | (size(vals, 1) == 0)
+                return new(DataFrame([]), Array{T, 1}[])
+            end
+            error(length(idx), " idx entries, but ", size(vals, 1), " rows of data")
+        end
+        return new(vals, idx)
+    end
+end
+
+function Investments{T}(vals::DataFrame, idx::Array{T, 1})
+    return Investments{T}(vals, idx)
+end
+
+####################
+## display method ##
+####################
+
+import Base.Multimedia.display
+function display(invs::Investments)
+    ## display information about an array
+    
+    ## set display parameters
+    maxDispCols = 5;
+    
+    ## get type and field information
+    typ = typeof(invs)
+    println("\ntype: $typ")    
+    print("dimensions: ")
+    print(size(invs))
+    print("\n")
+    
+    ## get first entries
+    (nrow, ncol) = size(invs)    
+
+    showCols = minimum([maxDispCols ncol]);
+
+    Peekidx = DataFrame(idx = invs.idx);
+    Peek = [Peekidx invs.vals[:, 1:showCols]];
+    display(Peek)
+end
+
+
+## #######################
+## ## Investments push! ##
+## #######################
+
+## ## TO IMPROVE: better way to append to dataframe!
+## import Base.push!
+## function push!(inv::Investments, pf::Portfolio)
+##     ## most likely this is very inefficient!!
+##     inv.portfolios = [inv.portfolios, pf.weights]
+##     return inv
+## end
+
+## ######################
+## ## Investments plot ##
+## ######################
+
+## import Winston.plot
+## function plot(invs::Investments)
+##     plot(matrix(invs.portfolios))
+## end
+
+## #####################################
+## ## Investments measure performance ##
+## #####################################
+
+## function perform(invs::Investments, td::TimeData)
+##     if(size(invs) != size(td))
+##         error("investements must match size of data")
+##     end
+##     tmp = matrix(invs.portfolios) .* matrix(td.vals)
+##     rets = sum(tmp, 2)
+##     retsDf = DataFrame(rets)
+##     tdRets = TimeData(retsDf, td.dates)
+##     return tdRets
+## end
+
+######################
+## Investments size ##
+######################
+
+import Base.size
+function size(invs::Investments)
+    return size(invs.vals)
+end
+
+function size(invs::Investments, ind::Int)
+    return size(invs.vals, ind)
+end
+
+#####################
+## get investments ##
+#####################
+
+function weights(invs::Investments)
+    return array(invs.vals)
+end
+
+import TimeData.core
+function core(invs::Investments)
+    return array(invs.vals)
+end
+
+###############
+## get index ##
+###############
+
+function idx(invs::Investments)
+    return invs.idx
+end
+
+## function fixWeights(pf::Portfolio, td::TimeData)
+##     if(size(pf)[2] != size(td)[2])
+##         error("number of assets must match")
+##     end
+
+##     nDays = size(td)[1]
+##     invs = repmat(matrix(pf.weights), nDays, 1)
+##     assetNames = colnames(td.vals)
+##     invs = Investments(DataFrame(invs, assetNames))
+##     return invs
+## end
+
+## function transactions(invs::Investments, td::TimeData)
+##     invsArr = matrix(invs.portfolios)
+##     rets = matrix(td.vals)
+
+    
+
+    
+##     return transTd
+## end
+
+## function evolve(invs::Investments, td::TimeData)
+##     nAss = size(invs)[2]
+    
+##     ## get percentage portfolio returns
+##     pRetsDt = perform(invs, td)
+
+##     factors = (1 + matrix(td.vals)/100) ./ repmat(1 +
+##                                                  matrix(pRetsDt.vals)/100, 1, nAss)
+
+##     newWeights = matrix(invs.portfolios) .* factors
+##     newWeightsDf = DataFrame(newWeights, colnames(td.vals))
+##     invs = Investments(newWeightsDf)
+## end
+
+## function evolve(pf::Portfolio, td::TimeData)
+##     retP = (matrix(pf.weights) * matrix(td.vals)')/100
+
+##     factors = (1 + matrix(td.vals)/100) / (1+retP[1])
+##     newWeights = matrix(pf.weights) .* factors
+##     newWeightsDf = DataFrame(newWeights, colnames(td.vals))
+##     pfNew = Portfolio(newWeightsDf)
+## end
+
+## function requiredInvestementChanges(invs::Investments, evolved::Investments)
+##     nAss = size(invs)[2]
+##     invsArr = matrix(invs.portfolios)
+##     evolArr = matrix(evolved.portfolios)
+
+##     trans = [zeros(1, nAss); invsArr[2:end, :] - evolArr[1:(end-1), :]]
+
+##     transDf = DataFrame(trans, colnames(invs.portfolios))
+##     return transDf
+## end
