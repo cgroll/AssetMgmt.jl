@@ -7,7 +7,7 @@ include(string(Pkg.dir("AssetMgmt"), "/src/AssetMgmt.jl"))
 
 println("\n Running universe tests\n")
 
-df = DataFrame(rand(50, 4))
+df = DataFrame(rand(500, 4))
 mus = AssetMgmt.mean(df, 1)
 covMatr = AssetMgmt.cov(df)
 
@@ -24,6 +24,6 @@ data = readTimedata(dataFile)
 univ = AssetMgmt.Universe(data)
 
 ## get mvp
-AssetMgmt.mvp(univ)
+univ.mvp
 
 end

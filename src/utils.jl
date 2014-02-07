@@ -15,3 +15,4 @@ function corrcov(covMatr::DataFrame)
     return DataFrame(d*array(covMatr)*d, names(covMatr))
 end
 
+

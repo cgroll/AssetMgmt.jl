@@ -8,23 +8,31 @@
 type Universe
     mus::DataFrame
     covMatr::DataFrame
-    ## mvp::Portfolio
-    ## auxVals::Array{Float64, 1}
+    mvp::Portfolio
+    auxVals::Array{Float64, 1}
 
-    function Universe(mus::DataFrame, covMatr::DataFrame)
+    function Universe(mus::DataFrame, covMatr::DataFrame,
+                      mvp::Portfolio, auxVals::Array{Float64, 1})
         nMus = size(mus, 2)
         nCovs = size(covMatr, 1)
-        if(nMus != nCovs)
+        nWgts = size(mvp)
+        if !(nMus == nCovs == nWgts)
             error("Dimensions of mus and covs must match")
         end
-        new(mus, covMatr)
+        new(mus, covMatr, mvp, auxVals)
     end
 end
 
-        ## mvp::Portfolio, auxVals::Array{Float64, 1}
+
 #################################
 ## Universe outer constructors ##
 #################################
+
+function Universe(mus::DataFrame, covMatr::DataFrame)
+    auxV = auxVals(mus, covMatr)    
+    p = mvp(mus, covMatr, [auxV...])
+    return Universe(mus, covMatr, p, [auxV...])
+end
 
 function Universe(tm::Timematr)
     ## from data
@@ -59,12 +67,16 @@ end
 ##############################
 
 function auxVals(univ::Universe)
+    return univ.auxVals
+end    
+
+function auxVals(musDf::DataFrame, covMatrDf::DataFrame)
     ## extract values
-    covMatr = array(univ.covMatr);
-    mus = array(univ.mus)[:];
+    covMatr = array(covMatrDf);
+    mus = array(musDf)[:];
     
     ## get size of universe
-    nAss = size(univ);
+    nAss = size(covMatrDf, 1);
     
     ## derive fundamental values
     onesN = ones(nAss);
@@ -79,20 +91,25 @@ end
 
 
 function mvp(univ::Universe)
+    return univ.mvp
+end
+
+function mvp(musDf::DataFrame, covMatrDf::DataFrame,
+             auxV::Array{Float64, 1})
     ## extract values
-    covMatr = array(univ.covMatr);
+    covMatr = array(covMatrDf);
     
     ## get helper values
-    (a, b, c, d) = auxVals(univ);
+    c = auxV[3, 1]
     
     ## get size of universe
-    nAss = size(univ);
+    nAss = size(covMatrDf, 1);
     
     ## derive fundamental values
     onesN = ones(nAss);
     
     ## get GMVP
-    pf = Portfolio([inv(covMatr)*onesN/c], names(univ));
+    pf = Portfolio([inv(covMatr)*onesN/c], names(musDf));
     
     return pf
 end
