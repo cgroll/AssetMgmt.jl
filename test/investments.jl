@@ -4,6 +4,10 @@ using Base.Test
 using DataFrames
 using Datetime
 using TimeData
+include(string(Pkg.dir("AssetMgmt"), "/src/AssetMgmt.jl"))
+
+println("\n Running investments tests\n")
+
 ## using Markowitz
 
 vals = rand(8, 4)

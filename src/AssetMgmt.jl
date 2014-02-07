@@ -10,6 +10,8 @@ using DataFrames
 ##############################################################################
 
 export # functions and types
+chkEqualsOne,
+makeWeights,
 Investments,
 Portfolio
 

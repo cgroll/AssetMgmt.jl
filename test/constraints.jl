@@ -1,8 +1,11 @@
 module testConstraints
 
 using Base.Test
+using DataFrames
 using TimeData
-## using Markowitz
+include(string(Pkg.dir("AssetMgmt"), "/src/AssetMgmt.jl"))
+
+println("\n Running moments tests\n")
 
 ##############################
 ## chkEqualsOne for vectors ##
@@ -12,14 +15,14 @@ using TimeData
 simVals = rand(8, 1)
 simVals = simVals./sum(simVals)
 
-chkEqualsOne(simVals)
-chkEqualsOne(simVals[:])
+AssetMgmt.chkEqualsOne(simVals)
+AssetMgmt.chkEqualsOne(simVals[:])
 
 ## test invalid portfolio weights
 simVals[2] = simVals[2] - 1e-8
 
-@test_throws chkEqualsOne(simVals)
-@test_throws chkEqualsOne(simVals[:])
+@test_throws AssetMgmt.chkEqualsOne(simVals)
+@test_throws AssetMgmt.chkEqualsOne(simVals[:])
 
 
 ##########################
@@ -28,26 +31,26 @@ simVals[2] = simVals[2] - 1e-8
 
 ## test valid investment weights
 simVals = rand(1, 10)
-wgts = makeWeights(simVals)
-chkEqualsOne(wgts)
+wgts = AssetMgmt.makeWeights(simVals)
+AssetMgmt.chkEqualsOne(wgts)
 
 ###############################
 ## chkEqualsOne for matrices ##
 ###############################
 
 simVals = rand(10, 5)
-simVals = makeWeights(simVals)
+simVals = AssetMgmt.makeWeights(simVals)
 
-## chkEquals not define for matrices
-@test_throws chkEqualsOne(simVals)
+## chkEquals meanwhile defined for matrices
+AssetMgmt.chkEqualsOne(simVals)
 
 tm = Timematr(simVals)
-chkEqualsOne(tm)
+AssetMgmt.chkEqualsOne(tm)
 
 ## test invalid input
 simVals[1, 1] = simVals[1, 1] + 1e-8
 
 tm = Timematr(simVals)
-chkEqualsOne(tm)
+@test_throws AssetMgmt.chkEqualsOne(tm)
 
 end
