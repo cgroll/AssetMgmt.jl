@@ -3,7 +3,7 @@
 ###########################
 
 function getPMean(pf::Portfolio, mus::DataFrame)
-    pMean = array(mus)*pf.weights
+    pMean = core(pf)*array(mus)'
     return pMean
 end
 
@@ -23,19 +23,20 @@ end
 ## Portfolio covariance matrix ##
 #################################
 
+function getPVar(wgts::Array{Float64, 2}, covMatr::Array{Float64, 2})
+    nPfs = size(wgts, 1)
+    pVars = Array(Float64, nPfs)
+    for ii=1:nPfs
+        pVars[ii, 1] = (wgts[ii, :]*covMatr*(wgts[ii, :])')[1]
+    end
+    return pVars
+end
+
 function getPVar(pf::Portfolio, covMatr::DataFrame)
-    pVar = (pf.weights)'*array(covMatr)*pf.weights
+    pVar = getPVar(array(pf), array(covMatr))
 end
 
 function getPVar(invs::Investments, covMatr::DataFrame)
-    nDays = size(invs, 1)
-    pVars = Array(Float64, nDays)
-    covArr = array(covMatr)
-    wgts = core(invs)
-    for ii=1:nDays
-        pVars[ii, 1] = (wgts[ii, :]*covArr*(wgts[ii, :])')[1]
-    end
-    
-    varTm = Timematr(pVars, idx(invs))
-    return varTm
+    pVars = getPVar(core(invs), array(covMatr))
+    return Timematr(pVars, idx(invs))
 end

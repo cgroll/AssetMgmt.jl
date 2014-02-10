@@ -12,8 +12,8 @@ println("\n Running moments tests\n")
 ## test portfolio mean ##
 #########################
 
-pf = AssetMgmt.Portfolio(ones(1, 8)/8)
-mus = DataFrame(rand(4, 8))
+pf = AssetMgmt.Portfolio(ones(4, 8)/8)
+mus = DataFrame(rand(1, 8))
 
 ## test getPMean for portfolios
 AssetMgmt.getPMean(pf, mus)

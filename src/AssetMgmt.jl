@@ -2,6 +2,7 @@ module AssetMgmt
 
 using TimeData
 using DataFrames
+using DataArrays
 
 ##############################################################################
 ##

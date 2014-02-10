@@ -11,6 +11,8 @@ df = DataFrame(rand(500, 4))
 mus = AssetMgmt.mean(df, 1)
 covMatr = AssetMgmt.cov(df)
 
+AssetMgmt.mvp(mus, covMatr, [AssetMgmt.auxVals(mus, covMatr)...])
+
 univ = AssetMgmt.Universe(mus, covMatr)
 
 ###############
@@ -34,5 +36,6 @@ AssetMgmt.getPMoments(pf, univ)
 ## get mu grid for efficient frontier
 effMus = AssetMgmt.getMuGrid(univ)
 effPfs = AssetMgmt.effPf(univ, effMus)
+effVars = AssetMgmt.getPVar(effPfs, univ)
 
 end

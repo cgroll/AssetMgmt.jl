@@ -7,17 +7,14 @@
 ## - no NAs
 ## - convex combination
 
-## type portfolio: only one row, summing up to one
+## type portfolio: rows summing up to one
 type Portfolio
-    weights::Array{Float64, 1}
-    names::Array{Union(ASCIIString,UTF8String),1}
+    vals::DataFrame
 
-    function Portfolio(wgts, names)
-        if length(wgts) != length(names)
-            error("number of names must equal number of weights")
-        end
-        chkEqualsOne(wgts)
-        new(wgts, names)
+    function Portfolio(vals)
+        chkNum(vals)
+        chkEqualsOne(vals)
+        new(vals)
     end
 end
 
@@ -25,22 +22,62 @@ end
 ## Portfolio outer constructors  ##
 ###################################
 
+## initialize from core components
+function Portfolio(vals::Array{Float64, 2},
+                   nams::Array{Union(ASCIIString,UTF8String),1})
+    if size(vals, 2) != length(nams)
+        error("number of names must equal number of weights")
+    end
+
+    df = DataFrame(vals)
+    names!(df) = nams
+    return Portfolio(df)
+end
+
+## initialize single portfolio from core components
+function Portfolio(vals::Array{Float64, 1},
+                   nams::Array{Union(ASCIIString,UTF8String),1})
+    if length(vals) != length(nams)
+        error("number of names must equal number of weights")
+    end
+
+    df = DataFrame(vals')
+    names!(df) = nams
+    return Portfolio(df)
+end
+
+
 ## initialize from timematr
 function Portfolio(tm::Timematr)
-    return Portfolio(core(tm)[:], names(tm))
+    return Portfolio(core(tm), names(tm))
 end
 
 ## initialize from one-dimensional array (column vector)
 function Portfolio(x::Array{Float64, 1})
-    tm = Timematr(x)
-    return Portfolio(tm)
+    df = DataFrame(x')
+    return Portfolio(df)
 end
 
 ## initialize from two-dimensional array (row vector)
 function Portfolio(x::Array{Float64, 2})
-    tm = Timematr(x)
-    return Portfolio(tm)
+    df = DataFrame(x)
+    return Portfolio(df)
 end
+
+###########################
+## information retrieval ##
+###########################
+
+import Base.names
+names(pf::Portfolio) = names(pf.vals)
+
+weights(pf::Portfolio) = array(pf.vals)
+
+import DataFrames.array
+array(pf::Portfolio) = array(pf.vals)
+
+import TimeData.names
+core(pf::Portfolio) = array(pf.vals)
 
 #######################
 ## display Portfolio ##
@@ -61,13 +98,17 @@ end
 
 function display(pf::Portfolio)
     
-    nAss = length(pf.weights)
-    maxNameLength = maximum([length(t) for t in pf.names])+2
-
+    nAss = size(pf, 2)
     print("Portfolio of $nAss assets:\n")
-    for ii=1:nAss
-        print(@sprintf("%6s | %4f \n",
-                       pf.names[ii], pf.weights[ii]))
+
+    if size(pf, 1) > 1
+        display(pf.vals)
+    else
+        maxNameLength = maximum([length(t) for t in names(pf)])+2
+        for ii=1:nAss
+            print(@sprintf("%6s | %4f \n",
+                           names(pf)[ii], pf.vals[1, ii]))
+        end
     end
 end
 
@@ -131,7 +172,8 @@ end
 ########################################
 
 import Base.size
-size(pf::Portfolio) = length(pf.weights)
+size(pf::Portfolio) = size(pf.vals)
+size(pf::Portfolio, int::Integer) = size(pf.vals, int)
 
 ## import Base.getindex
 ## getindex(pf::Portfolio, args...) = getindex(pf.weights, args...)

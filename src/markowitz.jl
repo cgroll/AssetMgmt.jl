@@ -14,8 +14,8 @@ type Universe
     function Universe(mus::DataFrame, covMatr::DataFrame,
                       mvp::Portfolio, auxVals::Array{Float64, 1})
         nMus = size(mus, 2)
-        nCovs = size(covMatr, 1)
-        nWgts = size(mvp)
+        nCovs = size(covMatr, 2)
+        nWgts = size(mvp, 2)
         if !(nMus == nCovs == nWgts)
             error("Dimensions of mus and covs must match")
         end
@@ -162,14 +162,11 @@ end
 #######################
 
 function getPMean(pf::Portfolio, univ::Universe)
-    pMean = array(univ.mus)*pf.weights
-    return pMean
+    return getPMean(pf, univ.mus)
 end
 
 function getPVar(pf::Portfolio, univ::Universe)
-    w = pf.weights
-    pVar = w'*array(univ.covMatr)*w
-    return pVar
+    return getPVar(pf, univ.covMatr)
 end
 
 function getPMoments(pf::Portfolio, univ::Universe)
@@ -214,7 +211,7 @@ function effPf(univ::Universe, mus::Array{Float64, 1})
     weights = inv(covMatr)*R*phiInv*muExtended # each column is
                                         # weights vector
 
-    invs = Investments(DataFrame(weights', names(univ.mus)))
+    invs = Portfolio(DataFrame(weights', names(univ.mus)))
 end
 
 
