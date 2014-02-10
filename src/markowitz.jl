@@ -156,3 +156,65 @@ import Base.names
 function names(univ::Universe)
     return names(univ.mus)
 end
+
+#######################
+## portfolio moments ##
+#######################
+
+function getPMean(pf::Portfolio, univ::Universe)
+    pMean = array(univ.mus)*pf.weights
+    return pMean
+end
+
+function getPVar(pf::Portfolio, univ::Universe)
+    w = pf.weights
+    pVar = w'*array(univ.covMatr)*w
+    return pVar
+end
+
+function getPMoments(pf::Portfolio, univ::Universe)
+    mu = getPMean(pf, univ)
+    pVar = getPVar(pf, univ)
+    return [mu pVar]
+end
+
+##############################
+## get Markowitz portfolios ##
+##############################
+
+function getMuGrid(univ::Universe, addup = 0.05::Float64,
+                   nGrid = 10::Int)
+    minMuPf = mvp(univ);
+    minMu = getPMean(minMuPf, univ);
+    
+    return linspace(minMu[1], (maximum(array(univ.mus)) + addup), nGrid)
+end
+
+## function getFrontier(univ::Universe, addup = 0.05::Float64, nGrid =
+##                      10::Int)
+##     muGrid = getMuGrid(univ, addup, nGrid)
+
+## end
+
+
+function effPf(univ::Universe, mus::Array{Float64, 1})
+    ## minimize variance for given portfolio means mu
+    nAss = size(univ)
+    nMus = length(mus)
+    
+    R = [array(univ.mus)[:] ones(nAss)]
+    covMatr = array(univ.covMatr)
+
+    muExtended = [mus[:]', ones(nMus)']
+    
+    (a, b, c, d) = auxVals(univ);
+    phiInv = 1/d*[c -b; -b a];
+
+    ## weights = inv(covMatr)*R*inv(R'*inv(covMatr)*R)*[mu[1], 1];
+    weights = inv(covMatr)*R*phiInv*muExtended # each column is
+                                        # weights vector
+
+    invs = Investments(DataFrame(weights', names(univ.mus)))
+end
+
+

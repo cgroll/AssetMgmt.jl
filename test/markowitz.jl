@@ -24,6 +24,15 @@ data = readTimedata(dataFile)
 univ = AssetMgmt.Universe(data)
 
 ## get mvp
-univ.mvp
+pf = AssetMgmt.mvp(univ)
+
+## get moments for portfolio
+AssetMgmt.getPMean(pf, univ)
+AssetMgmt.getPVar(pf, univ)
+AssetMgmt.getPMoments(pf, univ)
+
+## get mu grid for efficient frontier
+effMus = AssetMgmt.getMuGrid(univ)
+effPfs = AssetMgmt.effPf(univ, effMus)
 
 end

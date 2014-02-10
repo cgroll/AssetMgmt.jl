@@ -136,4 +136,3 @@ size(pf::Portfolio) = length(pf.weights)
 ## import Base.getindex
 ## getindex(pf::Portfolio, args...) = getindex(pf.weights, args...)
 
-

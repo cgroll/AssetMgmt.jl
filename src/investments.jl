@@ -24,6 +24,11 @@ function Investments{T}(vals::DataFrame, idx::Array{T, 1})
     return Investments{T}(vals, idx)
 end
 
+function Investments(vals::DataFrame)
+    nPortfolios = size(vals, 1)
+    return Investments(vals, [1:nPortfolios])
+end
+
 ####################
 ## display method ##
 ####################
