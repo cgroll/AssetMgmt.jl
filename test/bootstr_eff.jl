@@ -15,7 +15,7 @@ println("\n Running bootstrap analysis\n")
 ###############
 
 fullData = readTimedata("/home/chris/research/asset_mgmt/data/datesLogRet.csv")
-data = fullData[:, 50:250]
+data = fullData[:, 1:end]
 
 ## dataFile = string(Pkg.dir("AssetMgmt"), "/data/discr_ret.csv")
 ## data = readTimedata(dataFile)
@@ -26,7 +26,9 @@ univ = AssetMgmt.Universe(data)
 pdMat = PDMat(array(univ.covMatr))
 d = MvNormal(array(univ.mus)[:], pdMat)
 
-muGrid = AssetMgmt.getMuGrid(univ)
+muAddon = 0.5
+nMuGrid = 40
+muGrid = AssetMgmt.getMuGrid(univ, muAddon, nMuGrid)
 effPfs = AssetMgmt.effPf(univ, muGrid)
 effMus = AssetMgmt.getPMean(effPfs, univ)
 effVars = AssetMgmt.getPVar(effPfs, univ)
@@ -40,7 +42,7 @@ add(p, Curve(sqrt(effVars), effMus[:], color="red"))
 add(p, Points(sqrt(diag(array(univ.covMatr))), array(univ.mus)))
 
 nBootstr = 100
-nObs = 200
+nObs = 2000
 
 realizedMus = Array(Float64, length(muGrid), nBootstr)
 realizedVars = Array(Float64, length(muGrid), nBootstr)
@@ -50,7 +52,7 @@ for ii=1:nBootstr
     simVals = Timematr(simVals, names(univ))
 
     fakeUniv = AssetMgmt.Universe(simVals)
-    fakeMuGrid = AssetMgmt.getMuGrid(fakeUniv)
+    fakeMuGrid = AssetMgmt.getMuGrid(fakeUniv, muAddon, nMuGrid)
     fakeEffPfs = AssetMgmt.effPf(fakeUniv, fakeMuGrid)
 
     realizedMus[:, ii] = AssetMgmt.getPMean(fakeEffPfs, univ)
