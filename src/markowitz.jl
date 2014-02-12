@@ -34,6 +34,19 @@ function Universe(mus::DataFrame, covMatr::DataFrame)
     return Universe(mus, covMatr, p, [auxV...])
 end
 
+function Universe(mus::Array{Float64, 2},
+                  covMatr::Array{Float64, 2},
+                  names::Array{Union(UTF8String,ASCIIString),1})
+    
+    auxV = auxVals(mus, covMatr)
+    musDf = DataFrame(mus)
+    names!(musDf) = names
+    covMatrDf = DataFrame(covMatr)
+    names!(covMatr) = names
+    p = mvp(musDf, covMatrDf, [auxV...])
+    return Universe(musDf, covMatrDf, p, [auxV...])
+end
+
 function Universe(tm::Timematr)
     ## from data
     mus = mean(tm)
@@ -70,13 +83,10 @@ function auxVals(univ::Universe)
     return univ.auxVals
 end    
 
-function auxVals(musDf::DataFrame, covMatrDf::DataFrame)
-    ## extract values
-    covMatr = array(covMatrDf);
-    mus = array(musDf)[:];
-    
+function auxVals(mus::Array{Float64, 1},
+                 covMatr::Array{Float64, 2})
     ## get size of universe
-    nAss = size(covMatrDf, 1);
+    nAss = size(covMatr, 1);
     
     ## derive fundamental values
     onesN = ones(nAss);
@@ -87,6 +97,18 @@ function auxVals(musDf::DataFrame, covMatrDf::DataFrame)
     d = a[1]*c[1] - b[1]^2;
     
     return a[1], b[1], c[1], d
+end    
+
+function auxVals(mus::Array{Float64, 2},
+                 covMatr::Array{Float64, 2})
+    return auxVals(mus[:], covMatr)
+end    
+
+function auxVals(musDf::DataFrame, covMatrDf::DataFrame)
+    ## extract values
+    covMatr = array(covMatrDf);
+    mus = array(musDf)[:];
+    return auxVals(mus, covMatr)
 end    
 
 

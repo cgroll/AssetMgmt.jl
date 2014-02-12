@@ -2,7 +2,7 @@
 ## check convex combination constraint ##
 #########################################
 
-const precision = 1e-6
+const precision = 1e-9
 function chkEqualsOne(x::Array{Float64, 1})
     if(abs(sum(x) - 1) > precision)
         error("weights must sum to one")
