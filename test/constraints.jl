@@ -5,7 +5,7 @@ using DataFrames
 using TimeData
 include(string(Pkg.dir("AssetMgmt"), "/src/AssetMgmt.jl"))
 
-println("\n Running moments tests\n")
+println("\n Running constraints tests\n")
 
 ##############################
 ## chkEqualsOne for vectors ##

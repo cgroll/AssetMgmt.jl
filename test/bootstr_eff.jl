@@ -41,17 +41,23 @@ p = FramedPlot(title="Bootstrapped efficient frontiers",
 add(p, Curve(sqrt(effVars), effMus[:], color="red"))
 add(p, Points(sqrt(diag(array(univ.covMatr))), array(univ.mus)))
 
-nBootstr = 100
-nObs = 2000
+nBootstr = 250
+nObs = 4600
 
 realizedMus = Array(Float64, length(muGrid), nBootstr)
 realizedVars = Array(Float64, length(muGrid), nBootstr)
 
-for ii=1:nBootstr
-    simVals = rand(d, nObs)'
-    simVals = Timematr(simVals, names(univ))
+tic();
 
-    fakeUniv = AssetMgmt.Universe(simVals)
+@profile begin
+for ii=1:nBootstr
+## for ii=1:5
+    simVals = rand(d, nObs)'
+
+    mus = mean(simVals, 1)
+    covMatr = cov(simVals)
+
+    fakeUniv = AssetMgmt.Universe(mus, covMatr, names(univ))
     fakeMuGrid = AssetMgmt.getMuGrid(fakeUniv, muAddon, nMuGrid)
     fakeEffPfs = AssetMgmt.effPf(fakeUniv, fakeMuGrid)
 
@@ -61,6 +67,10 @@ for ii=1:nBootstr
     ## realizedSigmas = sqrt(realizedVars)
     add(p, Curve(sqrt(realizedVars[:, ii]), realizedMus[:, ii], color="blue"))
 end
+end
+    
+toc()
+
 p
 
 
