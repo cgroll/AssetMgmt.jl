@@ -11,11 +11,11 @@ end
 
 function chkEqualsOne(x::Array{Float64, 2})
     if size(x, 2) == 1
-        if(abs(sum(x) - 1) > precision)
+        if(abs(sum(x) .- 1) > precision)
             error("weights must sum to one")
         end
     else 
-        if any(abs(sum(x, 2) - 1) .> precision)
+        if any(abs(sum(x, 2) .- 1) .> precision)
             error("weights must sum to one")
         end
     end
@@ -24,7 +24,7 @@ end
 function chkEqualsOne(df::DataFrame)
     rowSums = sum(array(df), 2)
 
-    if any(abs(rowSums) - 1 .> precision)
+    if any(abs(rowSums) .- 1 .> precision)
         error("weights must sum to one")
     end
 end
@@ -32,7 +32,7 @@ end
 function chkEqualsOne(tm::Timematr)
     rowSums = sum(core(tm), 2)
 
-    if any(abs(rowSums) - 1 .> precision)
+    if any(abs(rowSums) .- 1 .> precision)
         error("weights must sum to one")
     end
 end
