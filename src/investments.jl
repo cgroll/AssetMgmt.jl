@@ -7,9 +7,15 @@ type Investments{T}
     idx::Array{T, 1}
 
     function Investments(vals::DataFrame, idx::Array{T, 1})
+        ## consists of time index and numeric data (no NAs allowed)
+        ## with equal row numbers and rowsums of data equal to one
+
+        ## check constraints
         TimeData.chkIdx(idx)
         TimeData.chkNum(vals)
         chkEqualsOne(vals)
+
+        ## check equal number of rows
         if(size(vals, 1) != length(idx))
             if (length(idx) == 0) | (size(vals, 1) == 0)
                 return new(DataFrame([]), Array{T, 1}[])
@@ -20,10 +26,12 @@ type Investments{T}
     end
 end
 
+## required for parametric type declaration
 function Investments{T}(vals::DataFrame, idx::Array{T, 1})
     return Investments{T}(vals, idx)
 end
 
+## initialization with dates
 function Investments(vals::DataFrame)
     nPortfolios = size(vals, 1)
     return Investments(vals, [1:nPortfolios])
