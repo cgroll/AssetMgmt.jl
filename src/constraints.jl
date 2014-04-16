@@ -66,3 +66,48 @@ function chkNum(df::DataFrame)
     chkNumDf(df)
 end
 
+###############################################
+## check matching investment and return data ##
+###############################################
+
+function chkMatchInvData(invs::Investments, discRet::Timematr)
+    ## test whether investments and return data are matching
+
+    ## check for conforming dates and assets
+    if AssetMgmt.idx(invs) != idx(discRet)
+        error("indices / dates of investments and returns must
+coincide")
+    end
+
+    if AssetMgmt.names(invs) != names(discRet)
+        error("asset names of investments and returns must coincide")
+    end
+end
+
+######################
+## evolving weights ##
+######################
+
+function evolWgts(invs::Investments, discRet::Timematr)
+    ## calculate evolving weights without re-balancing
+    ## evolved weights preserve dates -> interpretation: new weights
+    ## at the end of the same day
+
+    chkMatchInvData(invs, discRet)
+
+    invRets = AssetMgmt.invRet(invs, discRet)
+    invRets = core(invRets)
+    rets = core(discRet)
+    wgts = AssetMgmt.core(invs)
+
+    weightsDueToPriceChanges = zeros(size(invs))
+    for ii=1:size(invs, 1)
+        weightsDueToPriceChanges(ii, :) = wgts[ii, :] .*
+        (1 + discRet[ii, :]) ./ (1 + invRets[ii])
+    end
+
+    wgtsPriceChanges = composeDataFrame(weightsDueToPriceChanges,
+                                        names(discRet)) 
+    
+    return AssetMgmt.Investments(wgtsPriceChanges, idx(discRet))
+end
