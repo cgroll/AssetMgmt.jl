@@ -31,7 +31,7 @@ function Investments{T}(vals::DataFrame, idx::Array{T, 1})
     return Investments{T}(vals, idx)
 end
 
-## initialization with dates
+## initialization without dates
 function Investments(vals::DataFrame)
     nPortfolios = size(vals, 1)
     return Investments(vals, [1:nPortfolios])
@@ -65,6 +65,54 @@ function display(invs::Investments)
     display(Peek)
 end
 
+function str(invs::Investments)
+    display(invs)
+end
+
+
+######################
+## Investments size ##
+######################
+
+import Base.size
+function size(invs::Investments)
+    return size(invs.vals)
+end
+
+function size(invs::Investments, ind::Int)
+    return size(invs.vals, ind)
+end
+
+#####################
+## get investments ##
+#####################
+
+function weights(invs::Investments)
+    return array(invs.vals)
+end
+
+import TimeData.core
+function core(invs::Investments)
+    return array(invs.vals)
+end
+
+###############
+## get index ##
+###############
+
+import TimeData.idx
+function idx(invs::Investments)
+    return invs.idx
+end
+
+import Base.names
+function names(invs::Investments)
+    return names(invs.vals)
+end
+
+function core(invs::Investments)
+    return convert(Array{Float64}, array(invs.vals))
+end
 
 ## #######################
 ## ## Investments push! ##
@@ -102,39 +150,6 @@ end
 ##     return tdRets
 ## end
 
-######################
-## Investments size ##
-######################
-
-import Base.size
-function size(invs::Investments)
-    return size(invs.vals)
-end
-
-function size(invs::Investments, ind::Int)
-    return size(invs.vals, ind)
-end
-
-#####################
-## get investments ##
-#####################
-
-function weights(invs::Investments)
-    return array(invs.vals)
-end
-
-import TimeData.core
-function core(invs::Investments)
-    return array(invs.vals)
-end
-
-###############
-## get index ##
-###############
-
-function idx(invs::Investments)
-    return invs.idx
-end
 
 ## function fixWeights(pf::Portfolio, td::TimeData)
 ##     if(size(pf)[2] != size(td)[2])
