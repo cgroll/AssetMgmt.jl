@@ -30,10 +30,8 @@ wgts = AssetMgmt.equWgtInvestments(tm)
 @test AssetMgmt.idx(wgts) == idx(tm)
 @test AssetMgmt.names(wgts) == names(tm)
 
-if size(wgts, 1) >= 2
-    wgts1 = AssetMgmt.core(wgts)[1, :]
-    wgts2 = AssetMgmt.core(wgts)[2, :]
-    @test wgts1 == wgts2
-end
+wgts1 = AssetMgmt.core(wgts)[1, :]
+wgts2 = AssetMgmt.core(wgts)[2, :]
+@test (wgts1 == wgts2)
 
 end

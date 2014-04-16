@@ -93,7 +93,7 @@ end
 
 import TimeData.core
 function core(invs::Investments)
-    return array(invs.vals)
+    return convert(Array{Float64}, array(invs.vals))
 end
 
 ###############
@@ -110,8 +110,48 @@ function names(invs::Investments)
     return names(invs.vals)
 end
 
-function core(invs::Investments)
-    return convert(Array{Float64}, array(invs.vals))
+######################
+## evolving weights ##
+######################
+
+function evolWgtsCore(wgts::Array{Float64,2},
+                      rets::Array{Float64,2})
+    ## calculate evolving weights without re-balancing
+    ## low-level function not to be called directly!
+    ##
+    ## Output:
+    ## 	nObs x nAss Array{Float64, 2} containing evolved portfolio 
+    ## 	weights at the end of each day
+
+    invRets = invRetCore(wgts, rets)
+    
+    weightsDueToPriceChanges = zeros(size(wgts))
+    for ii=1:size(rets, 1)
+        weightsDueToPriceChanges[ii, :] = wgts[ii, :] .*
+        (1 .+ rets[ii, :]) ./ (1 .+ invRets[ii])
+    end
+
+    return weightsDueToPriceChanges
+end
+
+function evolWgts(invs::Investments, discRet::Timematr)
+    ## calculate evolving weights without re-balancing
+    ## evolved weights preserve dates -> interpretation: new weights
+    ## at the end of the same day
+    ##
+    ## Output:
+    ## 	nObs x nAss Investments object containing evolved portfolio
+    ## 	weights at the end of each day
+
+    chkMatchInvData(invs, discRet)
+
+    weightsDueToPriceChanges = evolWgtsCore(AssetMgmt.core(invs),
+                                            core(discRet)) 
+
+    wgtsPriceChanges = composeDataFrame(weightsDueToPriceChanges,
+                                        names(discRet)) 
+    
+    return AssetMgmt.Investments(wgtsPriceChanges, idx(discRet))
 end
 
 ## #######################

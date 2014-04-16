@@ -24,5 +24,8 @@ include("strategies.jl")
 ## include("moments.jl")
 ## include("markowitz.jl")
 include("utils.jl")
+include("performance.jl")
+include("diversification.jl")
+include("returnStatistics.jl")
 
 end # module

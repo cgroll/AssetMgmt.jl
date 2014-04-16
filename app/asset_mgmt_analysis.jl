@@ -2,16 +2,34 @@ using TimeData
 include("/home/chris/.julia/v0.3/AssetMgmt/src/AssetMgmt.jl")
 ## using DateTime
 
-tm = TimeData.readTimedata("/home/chris/.julia/v0.3/TimeData/data/logRet.csv")
-
-## create random weights
-
-wgts = randWgts(10, 3)
-AssetMgmt.chkEqualsOne(wgts)
-
+## load example data
+filename =
+    "/home/chris/Dropbox/research_databases/cfm/data/discRetSample_jl.csv"
+discRet = TimeData.readTimedata(filename)
     
-wgts2 = randInvestments(tm)    
+## (nObs, nAss) = size(discRet)
+
+## create equally weighted investments
+eqInvs = AssetMgmt.equWgtInvestments(discRet)
+
+## get diversification measures
+divIndicators = AssetMgmt.diversification(eqInvs)
+
+## get investment turnover
+tOver = AssetMgmt.turnover(eqInvs, discRet)
+
+## get portfolio returns
+pfRet = AssetMgmt.invRet(eqInvs, discRet)
+
+## get statistics on portfolio return
+retStats2 = AssetMgmt.returnStatistics(pfRet)
+
+## putting everything together
+kk = [tOver divIndicators]
 
 
-wgts3 = equWgtInvestments(tm)
-display(wgts3)
+## portfolio returns
+## portfolio return sigmas
+## intended turnover: second wgts matrix needed -> or:
+## 	intendedIndicators 
+## 
