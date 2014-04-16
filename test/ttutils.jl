@@ -40,4 +40,11 @@ covMatr = AssetMgmt.cov(df)
 
 AssetMgmt.corrcov(covMatr)
 
+##############
+## randWgts ##
+##############
+
+wgts = AssetMgmt.randWgts(10, 8)
+AssetMgmt.chkEqualsOne(wgts)
+
 end

@@ -1,0 +1,4 @@
+using TimeData
+include("/home/chris/.julia/v0.3/AssetMgmt/src/AssetMgmt.jl")
+
+tm = TimeData.readTimedata("/home/chris/.julia/v0.3/TimeData/data/logRet.csv")

@@ -1,0 +1,21 @@
+module testUniverse
+
+using TimeData
+using DataFrames
+include(string(Pkg.dir("AssetMgmt"), "/src/AssetMgmt.jl"))
+
+println("\n Running bootstrap analysis\n")
+
+###############
+## real data ##
+###############
+
+dataFile = string(Pkg.dir("AssetMgmt"), "/data/discr_ret.csv")
+data = readTimedata(dataFile)
+
+univ = AssetMgmt.Universe(data)
+
+
+
+
+end
