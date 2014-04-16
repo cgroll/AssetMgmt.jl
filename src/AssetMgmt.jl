@@ -19,9 +19,10 @@ Universe
 
 include("constraints.jl")
 include("investments.jl")
-include("portfolio.jl")
-include("moments.jl")
-include("markowitz.jl")
+include("strategies.jl")
+## include("portfolio.jl")
+## include("moments.jl")
+## include("markowitz.jl")
 include("utils.jl")
 
 end # module
