@@ -3,6 +3,7 @@ module AssetMgmt
 using TimeData
 using DataFrames
 using DataArrays
+using Gadfly
 
 ##############################################################################
 ##
@@ -27,5 +28,6 @@ include("utils.jl")
 include("performance.jl")
 include("diversification.jl")
 include("returnStatistics.jl")
+include("plotting.jl")
 
 end # module
