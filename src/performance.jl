@@ -1,5 +1,5 @@
 ## portfolio return
-function invRet(invs::Investments, discRet::Timematr)
+function invRet(invs::Investments, discRet::Timematr; name = :pRet)
     ## calculate portfolio returns for equal dates and assets
     ## Output:
     ## 	nObs x 1 Timematr of portfolio returns over time 
@@ -11,6 +11,9 @@ function invRet(invs::Investments, discRet::Timematr)
 
     portRet = AssetMgmt.invRetCore(wgts, rets)
     invDf = DataFrame(pfRet = portRet[:])
+
+    ## rename portfolio return according to strategy name
+    rename!(invDf, names(invDf), [name])
 
     return Timematr(invDf, idx(discRet))
 end
@@ -48,6 +51,25 @@ function turnover(invs::Investments, discRet::Timematr)
     tOverDf = DataFrame()
     tOverDf[:turnOver] = tOver[:]
     return Timematr(tOverDf, idx(discRet))
+end
+
+function intendedTurnover(invs::Investments)
+    ## calculate turnover due to intended rebalancing
+    ## Output:
+    ## 	nObs x 1 Timematr of daily portfolio turnover
+
+    invsArr = AssetMgmt.core(invs)
+
+    nObs = size(invs, 1)
+    tOver = zeros(nObs, 1)
+
+    for ii=2:nObs
+        tOver[ii, 1] = sum(abs(invsArr[ii, :] - invsArr[ii-1, :]))
+    end
+
+    tOverDf = DataFrame()
+    tOverDf[:intTurnOver] = tOver[:]
+    return Timematr(tOverDf, idx(invs))
 end
 
 
