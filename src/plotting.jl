@@ -57,7 +57,12 @@ end
 
 
 function plotWithBMs(pfRets::Timematr, bmIndex...) 
-    ## plot portfolio returns with benchmarks
+    ## plot portfolio price evolution with benchmarks
+    ##
+    ## Inputs:
+    ## 	pfRets 	nObs x 1 Timematr containing portfolio returns
+    ## 	bmIndex	tuple of nObs x 1 Timematr objects containing time
+    ## 				series of benchmarks
 
     data = pfRets
     
@@ -66,13 +71,8 @@ function plotWithBMs(pfRets::Timematr, bmIndex...)
         data = [data bmIndex[ii]]
     end
 
-    ## for debugging
-    display(typeof(bmIndex))
-    display(nBMs)
-    display(bmIndex)
-    
     ## calculate cumulated prices
-    prices = cumsum(data, 1)
+    prices = cumprod(data .+ 1, 1)
 
     AssetMgmt.plot(prices, Guide.xlabel("time"),
                    Guide.ylabel("price"),
@@ -90,9 +90,7 @@ function plotPfPerformance(wgts::Investments, discRet::Timematr,
     pfRet = AssetMgmt.invRet(wgts, discRet, name=strName)
 
     ## get cumulated prices for individual assets
-    cumPrices = cumsum(discRet, 1)      # comment: needs to be adapted
-                                        # for discrete return
-                                        # aggregation!!
+    cumPrices = cumprod(discRet .+ 1, 1)
 
     ############################
     ## asset price evolutions ##
