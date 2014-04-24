@@ -83,6 +83,8 @@ function plotPfPerformance(wgts::Investments, discRet::Timematr,
                            BMs...; 
                            strName = :strategy)
 
+    display(BMs)
+    
     (nObs, nAss) = size(discRet)
     nBMs = length(BMs)
     
@@ -171,7 +173,9 @@ returns"));
 
     retStats = AssetMgmt.returnStatistics(pfRet)
 
-    distrPlot = plot(pfRet.vals, x=string(strName),
+    distrPlots = Array(Any, (nBMs+1))
+    
+    distrPlots[1] = plot(pfRet.vals, x=string(strName),
          xintercept = [retStats.mu, retStats.VaR95, retStats.VaR99],
          Geom.histogram(minbincount=80),
          Geom.vline(color="orange"),
@@ -179,10 +183,26 @@ returns"));
          Guide.ylabel("frequency"),
          Guide.title("portfolio return distribution"));
 
+    for ii=1:nBMs
+        ## currBM = Timematr(BMs[ii].vals, idx(BMs[ii]))
+        currBM = BMs[ii]
+        title = string(string(names(currBM)), " return distribution")
+        retStats = AssetMgmt.returnStatistics(currBM)
+        distrPlots[ii+1] = plot(currBM.vals, x=string(names(currBM.vals)[1]),
+                             xintercept = [retStats.mu, retStats.VaR95, retStats.VaR99],
+                             Geom.histogram(minbincount=80),
+                             Geom.vline(color="orange"),
+                             Guide.xlabel("returns"),
+                             Guide.ylabel("frequency"),
+                             Guide.title(title));
+    end
+    
     ###################
     ## mu-sigma-plot ##
     ###################
 
+    retStats = AssetMgmt.returnStatistics(pfRet)
+    
     ## get moments of assets
     assetMus = mean(core(discRet), 1)
     assetSigmas = std(core(discRet), 1)
@@ -204,7 +224,7 @@ returns"));
         currBM = BMs[ii]
         bmMus[ii] = mean(core(currBM))
         bmSigmas[ii] = std(core(currBM))
-        bmNames[ii] = string(names(currBM))
+        bmNames[ii] = string(names(currBM)[1])
     end
     bmTyps = ["Benchm" for ii=1:nBMs]
     
@@ -215,11 +235,20 @@ returns"));
     pfTyp = "portf"
 
     moments = DataFrame()
-    moments[:mus] = [assetMus[:], bmMus[:], pfMu]
-    moments[:sigmas] = [assetSigmas[:], bmSigmas[:], pfSigma]
-    moments[:names] = [assetNames[:], bmNames[:], pfName]
-    moments[:typ] = [assetTyps[:], bmTyps[:], pfTyp]
+    ## moments[:mus] = [assetMus[:], bmMus[:], pfMu]
+    ## moments[:sigmas] = [assetSigmas[:], bmSigmas[:], pfSigma]
+    ## moments[:names] = [assetNames[:], bmNames[:], pfName]
+    ## moments[:typ] = [assetTyps[:], bmTyps[:], pfTyp]
 
+    ## for debugging
+    ## display(moments)
+        
+    ## new version should prioritize labels of portfolios over assets
+    moments[:mus] = [bmMus[:], pfMu, assetMus[:]]
+    moments[:sigmas] = [bmSigmas[:], pfSigma, assetSigmas[:]]
+    moments[:names] = [bmNames[:], pfName, assetNames[:]]
+    moments[:typ] = [bmTyps[:], pfTyp, assetTyps[:]]
+    
     muSigmaPlot = plot(layer(moments,
                              x="sigmas", y="mus", color="typ",
                              Geom.point),
@@ -229,9 +258,9 @@ returns"));
                        Guide.ylabel("mu"),
                        Guide.title("mu-sigma combinations"))
 
-    distrPlots = vstack(distrPlot, muSigmaPlot)
+    distrPlots = vstack(muSigmaPlot, distrPlots...)
     filename = string("pics/pfDistrib_", strName, ".pdf")
-    draw(PDF(filename, 10inch, 15inch), distrPlots)
+    draw(PDF(filename, 10inch, 25inch), distrPlots)
 
 end
 
