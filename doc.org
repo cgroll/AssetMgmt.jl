@@ -1,0 +1,32 @@
+#+TITLE: AssetMgmt documentation
+#+OPTIONS: eval:never-export
+#+PROPERTY: exports both
+#+PROPERTY: results silent
+#+PROPERTY: session *julia-docs*
+#+OPTIONS: :tangle yes
+
+* New types
+
+Portfolios over time are capture in a type ~Investments~. This type is
+used to represent the evolution of portfolio weights over time, and
+hence requires an index to assign portfolio weights to points in time.
+The implementation is quite similar in structure to the types
+implemented in the ~TimeData~ package. Fields of ~Investments~ objects
+are
+- vals :: a ~DataFrame~ 
+- idx :: an ~Array{T, 1}~, consisting of type ~Integer~, or type
+         ~Date~ or ~DateTime~ from package ~Datetime~
+In comparison to ~TimeData~ types, ~Investments~ does have an
+additional constraint: all rows must sum up to one (with some small
+tolerance). 
+
+Already implemented functions are:
+- functions to show entries:
+  - display
+  - str
+- size
+- functions to get core data:
+  - weights 
+  - core
+  - idx
+  - names
