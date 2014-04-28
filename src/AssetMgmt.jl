@@ -12,20 +12,27 @@ using Gadfly
 ##############################################################################
 
 export # functions and types
-chkEqualsOne,
-makeWeights,
 Investments,
-Portfolio,
-Universe
+chkEqualsOne,
+makeWeights
 
+## define basic investment type and type constraints
 include("constraints.jl")
 include("investments.jl")
+
+## define strategies
 include("strategies.jl")
 ## include("moments.jl")
-include("utils.jl")
+
+## define filters
+include("tOv_filters.jl")
+
+## performance analysis
 include("performance.jl")
 include("diversification.jl")
 include("plotting.jl")
-include("tOv_filters.jl")
+
+## other things
+include("utils.jl")
 
 end # module
