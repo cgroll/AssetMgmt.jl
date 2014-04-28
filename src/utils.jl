@@ -54,3 +54,17 @@ coincide")
         error("asset names of investments and returns must coincide")
     end
 end
+
+##################################################
+## normalize matrix values to represent weights ##
+##################################################
+
+function makeWeights(matr::Array{Float64, 2})
+    ## normalize matrix to have row sums of 1
+    nObs = size(matr, 1)
+    for ii=1:nObs
+        matr[ii, :] = matr[ii, :]./sum(matr[ii, :])
+    end
+    return matr
+end
+
