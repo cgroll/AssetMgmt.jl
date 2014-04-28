@@ -37,32 +37,3 @@ function chkEqualsOne(tm::Timematr)
     end
 end
 
-function makeWeights(matr::Array{Float64, 2})
-    ## normalize matrix to have row sums of 1
-    nObs = size(matr, 1)
-    for ii=1:nObs
-        matr[ii, :] = matr[ii, :]./sum(matr[ii, :])
-    end
-    return matr
-end
-
-function chkNumDf(df::DataFrame)
-    n = ncol(df)
-    for ii=1:n
-        ## check for numeric values
-        if(!issubtype(types(df)[ii], Number))
-            error("all columns must be numeric for conversion")
-        end
-        if(issubtype(types(df)[ii], Bool))
-            error("all columns must be numeric for conversion")
-        end
-    end
-end
-
-function chkNum(df::DataFrame)
-    if any(isna(df))
-        error("no NAs allowed in Portfolios or Investments")
-    end
-    chkNumDf(df)
-end
-
