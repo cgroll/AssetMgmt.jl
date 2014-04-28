@@ -2,11 +2,6 @@
 ## Portfolio get moments ##
 ###########################
 
-function getPMean(pf::Portfolio, mus::DataFrame)
-    pMean = core(pf)*array(mus)'
-    return pMean
-end
-
 function getPMean(invs::Investments, mus::DataFrame)
     ## possibly multiple mu vectors
     (nMus, nAss) = size(mus)
@@ -30,10 +25,6 @@ function getPVar(wgts::Array{Float64, 2}, covMatr::Array{Float64, 2})
         pVars[ii, 1] = (wgts[ii, :]*covMatr*(wgts[ii, :])')[1]
     end
     return pVars
-end
-
-function getPVar(pf::Portfolio, covMatr::DataFrame)
-    pVar = getPVar(array(pf), array(covMatr))
 end
 
 function getPVar(invs::Investments, covMatr::DataFrame)
