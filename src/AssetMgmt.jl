@@ -25,7 +25,6 @@ include("strategies.jl")
 include("utils.jl")
 include("performance.jl")
 include("diversification.jl")
-include("returnStatistics.jl")
 include("plotting.jl")
 include("tOv_filters.jl")
 
