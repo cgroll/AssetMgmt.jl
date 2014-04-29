@@ -1,15 +1,18 @@
 #+TITLE: AssetMgmt documentation
 #+OPTIONS: eval:never-export
 #+PROPERTY: exports both
-#+PROPERTY: results silent
+#+PROPERTY: results value
 #+PROPERTY: session *julia-docs*
 #+OPTIONS: :tangle yes
 
-* New types
+* Investments type
 
-Portfolios over time are capture in a type ~Investments~. This type is
-used to represent the evolution of portfolio weights over time, and
-hence requires an index to assign portfolio weights to points in time.
+Investments are a collection of chronologically sorted portfolios.
+Thereby, portfolio weights itself are stored as ~DataFrame~ so that
+columns can be labeled according to the respective asset name.
+Chronological ordering requires an additional field to keep track of
+the sequence of portfolios.
+
 The implementation is quite similar in structure to the types
 implemented in the ~TimeData~ package. Fields of ~Investments~ objects
 are
@@ -20,6 +23,51 @@ In comparison to ~TimeData~ types, ~Investments~ does have an
 additional constraint: all rows must sum up to one (with some small
 tolerance). 
 
+Although in principle you could easily create an instance of type
+~Investments~ from scratch, note that ~Investments~ are designed to be
+closely related to data through their column names. This way, many
+operations involving ~Investments~ and data will check for matching
+column names and indices.
+
+#+BEGIN_SRC julia :results value
+   using TimeData
+   using AssetMgmt
+   using Base.Test
+   
+   ## create random weights
+   wgts = rand(10, 4)
+   invsArr = makeWeights(wgts)
+   invsDf = convert(DataFrame, invsArr)
+   invs = Investments(invsDf)
+   
+   ## create pseudo data
+   simVals = Timematr(randn(10, 4))
+   
+   ## get portfolio return
+   pfRet = AssetMgmt.invRet(invs, simVals)
+   
+#+END_SRC
+
+#+RESULTS:
+
+Producing error:
+#+BEGIN_SRC julia :results value
+   ## using different column names
+   simValsDf = composeDataFrame(randn(10, 4), [:z1, :z2, :z3, :z4])
+   simVals = Timematr(simValsDf)
+#+END_SRC
+
+
+
+#+BEGIN_SRC julia :results output
+      pfRet = AssetMgmt.invRet(invs, simVals)
+#+END_SRC
+
+
+#+BEGIN_SRC julia :results 
+
+#+END_SRC
+      @test_throws pfRet = AssetMgmt.invRet(invs, simVals)
 Already implemented functions are:
 - functions to show entries:
   - display
