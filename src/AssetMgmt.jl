@@ -14,6 +14,7 @@ using Gadfly
 export # functions and types
 Investments,
 chkEqualsOne,
+invRet,
 makeWeights
 
 ## define basic investment type and type constraints
