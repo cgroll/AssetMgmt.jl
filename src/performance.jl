@@ -187,67 +187,61 @@ function returnStatistics(tm::Timematr)
     return retStat(names(tm)[1], mu, median, sigma, VaR95, VaR99, VaR995)
 end
 
-## MATLAB implementation of maximum drawdown
-## function [structValues] = maxDrawdownWiki(discRet)
-## % calculates maximum drawdown by using the algorithm from the wikipedia
-## % article "drawdown (economics)"
+######################
+## maximum drawdown ##
+######################
 
+function maxDD(discRet::Timematr)
+    ## calculate maximum percentage drawdown and time of occurrence
+    ##
+    ## Inputs:
+    ## 	discRet		nObs x 1 Timematr of discrete returns
+    ##
+    ## Output:
+    ## 	(percentDD, ddPeriod) tuple
+    ## 	percentDD 	scalar value of percentage return achieved during
+    ## 					maximum drawdown period
+    ## 	ddPeriod		data for subinterval of maximum drawdown
+    ##
+    ## Note: function is based on algorithm described in
+    ## http://en.wikipedia.org/wiki/Drawdown_%28economics%29 
 
-## %
-## % input: disc returns (vector)
-## % output: struct with maximum drawdown in percent
-
-## % convert to matrix if table
-## if istable(discRet)
-##     discRet = discRet{:,:};
-## end
-
-## %calclulate price values (value for t=0 is set to 1)
-## ret = discRet+1;
-## price = cumprod(ret); % starting with t=1
-
-## % algorithm as pseudocode from http://en.wikipedia.org/wiki/Maximum_drawdown
-## % MDD = 0
-## % peak = -99999
-## % for i = 1 to N step 1
-## %   if (NAV[i] > peak) # peak will be the maximum value seen so far (0 to i)
-## %     peak = NAV[i]
-## %   endif
-## %   DD[i] = 100.0 * (peak - NAV[i]) / peak
-## %   if (DD[i] > MDD) # Same idea as peak variable, MDD keeps track of the maximum drawdown so far.
-## %     MDD = DD[i]
-## %   endif
-## % endfor
-
-## MDD = 0;
-## peak = -99999;
-## %peakIndex = 0; % when does max drawdown start
-## DD = zeros(length(price));
-## currPeak = 0;
-## ddPeak = 0;
-## currDrawdownEnd = 0;
-
-## % for each day, measure percentage loss to previous peak
-## for ii = 1:length(price)
-##     if (price(ii) > peak)
-##         % if current value is new peak, it can not be the end of maximum
-##         % drawdown period
-##         peak = price(ii);
-##         currPeak = ii;
-##     end
+    ## only implemented for one asset at a time
+    (nObs, nAss) = size(discRet)
+    if nAss > 1
+        error("Only one asset allowed: discRet must be single column")
+    end
     
-##     DD(ii) = (peak - price(ii)) / peak;
-##     if (DD(ii) > MDD)
-##         % if current maximum drawdown is larger than previous one
-##         MDD = DD(ii);
-##         currDrawdownEnd = ii;
-##         ddPeak = currPeak;
-##     end
-## end
+    ## get cumulated returns
+    normedPrices = cumprod(discRet .+ 1, 1)
 
-## % create return struct
-## structValues = struct('maximumDrawdown', -MDD,...
-##     'Index', [ddPeak, currDrawdownEnd]);
-## end
+    ## init variables
+    drawdowns = zeros(nObs)
+    maxDD = 0;
+    highestValueSoFar = -99999;
+    highestValueSoFarIdx = 0;    
+    ddStartIdx = 0;
+    ddEndIdx = 0;
 
+    # for each day, measure percentage loss to previous peak
+    for ii = 1:nObs
+        if normedPrices[ii] > highestValueSoFar
+            # if current value is new peak, it can not be the end of
+            # maximum drawdown period, because drawdown up to this
+            # peak would be a positive value
+            highestValueSoFar = normedPrices[ii]
+            highestValueSoFarIdx = ii
+        else
+            drawdowns[ii] = (highestValueSoFar - normedPrices[ii]) / 
+                             highestValueSoFar
+        end
 
+        if drawdowns[ii] > maxDD
+            # if largest drawdown so far
+            maxDD = drawdowns[ii]
+            ddEndIdx = ii
+            ddStartIdx = highestValueSoFarIdx
+        end
+    end
+end
+    
