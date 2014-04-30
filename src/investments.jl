@@ -2,8 +2,8 @@
 ## contents ##
 ##############
 
-types:
-- Investments :: quite similar to Timematr, with fields ~vals~ and ~idx~
+## types:
+## - Investments :: quite similar to Timematr, with fields ~vals~ and ~idx~
 
 
 #################################

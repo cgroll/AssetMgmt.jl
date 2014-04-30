@@ -5,29 +5,31 @@ include("/home/chris/.julia/v0.3/Gadfly/src/Gadfly.jl")
 include("/home/chris/.julia/v0.3/AssetMgmt/src/AssetMgmt.jl")
 ## using DateTime
 
-## include("/home/chris/.julia/v0.3/EconData/src/EconData.jl")
+##############
+## get data ##
+##############
+
 include("/home/chris/research/julia/EconDatasets/src/EconDatasets.jl")
 logRet = EconDatasets.dataset("SP500")
+sectors = EconDatasets.dataset("Sectors")
+
+###################################
+## transform to discrete returns ##
+###################################
+
+## transform to discrete non-percentage returns
+discRet = exp(logRet/100).-1
 
 
-## load example data
-filename =
-    "/home/chris/Dropbox/research_databases/cfm/data/discRetSample_jl.csv"
-
-## large file
-## filename =
-    ## "/home/chris/Dropbox/research_databases/cfm/data/all_sp500_clean_logRet_jl.csv"
-
-filename =
-    "/home/chris/Dropbox/research_databases/cfm/data/sectorAffiliation.csv"
-sectors = readtable(filename, separator = ' ')
-
-discRet = TimeData.readTimedata(filename)
 (nObs, nAss) = size(discRet)
+
 ## create equally weighted investments
-eqInvs = AssetMgmt.equWgtInvestments(discRet)
+eqInvs = AssetMgmt.equWgtInvestments(discRet);
+AssetMgmt.str(eqInvs)
+
 ## get portfolio returns
-pfRet = AssetMgmt.invRet(eqInvs, discRet, name=:equallyWeighted)
+pfRet = AssetMgmt.invRet(eqInvs, discRet, name=:equallyWeighted);
+str(pfRet)
 
 ## get random portfolio returns as benchmarks
 randInvs = AssetMgmt.randInvestments(discRet)
