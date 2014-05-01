@@ -5,6 +5,34 @@ include("/home/chris/.julia/v0.3/Gadfly/src/Gadfly.jl")
 include("/home/chris/.julia/v0.3/AssetMgmt/src/AssetMgmt.jl")
 ## using DateTime
 
+
+## kk = by(sectors, :sector, x -> transpose(x[:, 1]))
+## for ii=1:size(kk, 1)
+##     kk[ii, 2] = array(kk[ii, 2])
+## end
+
+##############
+## get data ##
+##############
+
+include("/home/chris/research/julia/EconDatasets/src/EconDatasets.jl")
+logRet = EconDatasets.dataset("SP500")
+sectorsStr = EconDatasets.dataset("Sectors")
+
+## transform to discrete non-percentage returns
+discRet = exp(logRet/100).-1
+
+## transform sector entries into symbols
+tickerSymbols = [symbol(symb) for symb in sectorsStr[:, 1]]
+sectorSymbols = [symbol(symb) for symb in sectorsStr[:, 2]]
+sectors = DataFrame()
+sectors[:ticker] = tickerSymbols
+sectors[:sector] = sectorSymbols
+
+## transform dataframe to dictionary
+(nObs, nAss) = size(logRet)
+sectDict = {sectors[ii, 1] => sectors[ii, 2] for ii=1:nAss}
+
 ##########################################
 ## define dictionary inverting function ##
 ##########################################
@@ -28,32 +56,36 @@ function invertDict(dict::Dict)
     return invDict
 end
 
-kk = by(sectors, :sector, x -> transpose(x[:, 1]))
+#################################
+## define groupAssets function ##
+#################################
 
-for ii=1:size(kk, 1)
-    kk[ii, 2] = array(kk[ii, 2])
+function groupAssets(invs::Investments, groups::Dict{Any, Any})
+    wgts = invs.vals
+    groupWgts = DataFrame()
+    for group in groups
+        coreWgts = array(wgts[group[2]])
+        ## @show coreWgts[1:4, :]
+        groupWgts[group[1]] = sum(coreWgts, 2)[:]
+    end
+    ## @show groupWgts
+    AssetMgmt.Investments(groupWgts, idx(invs))
 end
 
-##############
-## get data ##
-##############
+## invert sector dictionary
+assetsInSector = invertDict(sectDict)
 
-include("/home/chris/research/julia/EconDatasets/src/EconDatasets.jl")
-logRet = EconDatasets.dataset("SP500")
-sectors = EconDatasets.dataset("Sectors")
+## get equally weighted portfolio wgts
+eqWgts = AssetMgmt.equWgtInvestments(discRet)
+sectorWgts = groupAssets(eqWgts, assetsInSector)
 
-## transform sector names into symbols
-sectorSymbols = [symbol(symb) for symb in sectors[:, 1]]
-sectors[:symbol] = sectorSymbols
-
-## store asset / sector pairs as dictionary
-sectDict = {sectors[i, 1] => sectors[i,2] for i=1:size(sectors, 1)}
+for group in assetsInSector
+    @show group
+end
 
 ## find number of stocks per sector
 by(sectors, :sector, x -> size(x, 1))
 
-## invert sector dictionary
-assetsInSector = invertDict(sectDict)
 
 ## get number of sectors
 nSectors = length(assetsInSector)
@@ -62,9 +94,10 @@ nSectors = length(assetsInSector)
 sectorRetsDf = DataFrame()
 for sect in assetsInSector
     ## @show sect
-    sectorData = logRet[sect[2]]
-    sectorMean = rowmeans(sectorData)
-    sectorRetsDf[convert(Symbol, sect[1])] = core(sectorMean)[:]
+    @show sect
+    ## sectorData = logRet[sect[2]]
+    ## sectorMean = rowmeans(sectorData)
+    ## sectorRetsDf[convert(Symbol, sect[1])] = core(sectorMean)[:]
 end
 
 sectorRets = Timematr(sectorRetsDf, idx(logRet))
@@ -88,10 +121,14 @@ for stock in sectDict
 end
 
 
+
 sectTuple = [(sectors[ii, 1], sectors[ii, 2]) 
              for ii=1:size(sectors, 1) ]
 
-kk = groupby(sectTuple, x -> x[2])
+kk = Iterators.groupby(sectTuple, x -> x[2])
+for ii in kk
+    @show ii
+end
 
 for stock in sectDict
     @show stock[2]
@@ -99,11 +136,6 @@ end
 
 kk = groupby(sectDict, x -> x[2])
 
-collect(groupby(["face", "foo", "bar", "book", "baz", "zzz"], x -> x[1]))
-
-for ii in kk
-    @show ii
-end
 
 for vals in values(sectDict)
     @show vals
@@ -124,8 +156,6 @@ for ii=1:size(smallData, 1)
 ## transform to discrete returns ##
 ###################################
 
-## transform to discrete non-percentage returns
-discRet = exp(logRet/100).-1
 
 
 (nObs, nAss) = size(discRet)
