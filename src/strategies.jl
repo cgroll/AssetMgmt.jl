@@ -28,3 +28,12 @@ function equWgtInvestments(discRet::Timematr)
 
     return AssetMgmt.Investments(df, idx(discRet))
 end
+
+function gmvSampleMoments(minDays, increasingSample)
+
+    ## estimation framework:
+    ## - minimum number of days?
+    ## - increasing sample size?
+    ## 
+
+end

@@ -23,7 +23,8 @@ include("investments.jl")
 
 ## define strategies
 include("strategies.jl")
-## include("moments.jl")
+include("markowitz.jl")
+include("moments.jl")
 
 ## define filters
 include("tOv_filters.jl")
