@@ -60,18 +60,6 @@ end
 ## define groupAssets function ##
 #################################
 
-function groupAssets(invs::Investments, groups::Dict{Any, Any})
-    wgts = invs.vals
-    groupWgts = DataFrame()
-    for group in groups
-        coreWgts = array(wgts[group[2]])
-        ## @show coreWgts[1:4, :]
-        groupWgts[group[1]] = sum(coreWgts, 2)[:]
-    end
-    ## @show groupWgts
-    AssetMgmt.Investments(groupWgts, idx(invs))
-end
-
 ## invert sector dictionary
 assetsInSector = invertDict(sectDict)
 
