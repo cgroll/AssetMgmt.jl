@@ -118,3 +118,110 @@ function names(invs::Investments)
     return names(invs.vals)
 end
 
+#############
+## convert ##
+#############
+
+function Base.convert(Timematr, invs::Investments)
+    return Timematr(invs.vals, AssetMgmt.idx(invs))
+end
+
+#############
+## isequal ##
+#############
+
+function Base.isequal(invs::Investments, invs2::Investments)
+    typeEqu = isequal(typeof(invs), typeof(invs2))
+    valsEqu = isequal(invs.vals, invs2.vals)
+    idxEqu = isequal(invs.idx, invs2.idx)
+    equ = (valsEqu & idxEqu & typeEqu)
+    return equ
+end
+
+######################
+## getindex methods ##
+######################
+
+## invs[SingleColumnIndex] => Timematr
+## invs[MultiColumnIndex] => Timematr (if columns sum up to one:
+## Investments?) 
+## invs[SingleRowIndex, SingleColumnIndex] => Scalar
+## invs[SingleRowIndex, MultiColumnIndex] => Timematr
+## invs[MultiRowIndex, SingleColumnIndex] => Timematr
+## invs[MultiRowIndex, MultiColumnIndex] => Timematr (if columns sum
+## up to one: Investments)
+
+## TimeData types do ALWAYS preserve types when indexing.
+
+typealias ColumnIndex Union(Real, Symbol)
+
+# invs[SingleColumnIndex] => Timematr
+function Base.getindex(invs::Investments, col_ind::ColumnIndex)
+    tm = convert(Timematr, invs)
+    return tm[col_ind]
+end
+
+# invs[MultiColumnIndex] => Timematr (Investments for simple
+# re-ordering)  
+function Base.getindex{T <: ColumnIndex}(invs::Investments,
+                                         col_inds::AbstractVector{T})
+    output = convert(Timematr, invs)[col_inds]
+    
+    ## are all columns selected?
+    nAss = size(invs, 2)
+    if length(col_inds) == nAss
+        if sort(col_inds) == sort(names(invs))
+            output = AssetMgmt.Investments(output.vals, idx(invs))
+        end
+    end
+    return output
+end
+
+# invs[SingleRowIndex, SingleColumnIndex] => Timematr
+function Base.getindex(invs::Investments, row_ind::Real,
+                       col_ind::ColumnIndex)
+    tm = convert(Timematr, invs)
+    return tm[row_ind, col_ind]
+end
+
+# invs[SingleRowIndex, MultiColumnIndex] => Timematr
+function Base.getindex{T <: ColumnIndex}(invs::Investments,
+                                         row_ind::Real,
+                                         col_inds::AbstractVector{T})
+    output = convert(Timematr, invs)[row_ind, col_inds]
+
+    ## are all columns selected?
+    nAss = size(invs, 2)
+    if length(col_inds) == nAss
+        if sort(col_inds) == sort(names(invs))
+            output = AssetMgmt.Investments(output.vals, idx(invs))
+        end
+    end
+    return output
+end
+
+# invs[MultiRowIndex, SingleColumnIndex] => Timematr
+function Base.getindex{T <: Real}(invs::Investments,
+                                  row_inds::AbstractVector{T},
+                                  col_ind::ColumnIndex)
+    tm = convert(Timematr, invs)
+    return tm[row_inds, col_ind]
+end
+
+# invs[MultiRowIndex, MultiColumnIndex] => Timematr
+function Base.getindex{R <: Real, T <: ColumnIndex}(invs::Investments,
+                                                    row_inds::AbstractVector{R},
+                                                    col_inds::AbstractVector{T})
+    output = convert(Timematr, invs)[row_inds, col_inds]
+
+    ## are all columns selected?
+    nAss = size(invs, 2)
+    if length(col_inds) == nAss
+        if sort(col_inds) == sort(names(invs))
+            output = AssetMgmt.Investments(output.vals, idx(invs))
+        end
+    end
+    return output
+end
+
+
