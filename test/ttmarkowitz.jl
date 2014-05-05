@@ -1,41 +1,31 @@
-module testUniverse
+module testMarkowitz
 
 using Base.Test
 using DataFrames
 using TimeData
 include(string(Pkg.dir("AssetMgmt"), "/src/AssetMgmt.jl"))
 
-println("\n Running universe tests\n")
+println("\n Running markowitz tests\n")
 
-df = DataFrame(rand(500, 4))
+df = convert(DataFrame, rand(500, 4))
 mus = AssetMgmt.mean(df, 1)
 covMatr = AssetMgmt.cov(df)
-
-AssetMgmt.mvp(mus, covMatr, [AssetMgmt.auxVals(mus, covMatr)...])
-
-univ = AssetMgmt.Universe(mus, covMatr)
+wgts = AssetMgmt.gmv(mus, covMatr) # should be close to
+											  # [0.25 0.25 0.25 0.25]
 
 ###############
 ## real data ##
 ###############
 
-dataFile = string(Pkg.dir("AssetMgmt"), "/data/discr_ret.csv")
-data = readTimedata(dataFile)
+include("/home/chris/research/julia/EconDatasets/src/EconDatasets.jl")
+logRet = EconDatasets.dataset("SP500")
 
-## get universe
-univ = AssetMgmt.Universe(data)
+## transform to discrete non-percentage returns
+discRet = exp(logRet/100).-1
 
-## get mvp
-pf = AssetMgmt.mvp(univ)
+mus = mean(discRet, 1)
+covMatr = cov(discRet)
 
-## get moments for portfolio
-AssetMgmt.getPMean(pf, univ)
-AssetMgmt.getPVar(pf, univ)
-AssetMgmt.getPMoments(pf, univ)
-
-## get mu grid for efficient frontier
-effMus = AssetMgmt.getMuGrid(univ)
-effPfs = AssetMgmt.effPf(univ, effMus)
-effVars = AssetMgmt.getPVar(effPfs, univ)
+wgts = AssetMgmt.gmv(mus, covMatr)
 
 end
