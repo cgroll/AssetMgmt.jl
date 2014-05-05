@@ -31,9 +31,10 @@ include("tOv_filters.jl")
 ## performance analysis
 include("performance.jl")
 include("diversification.jl")
+include("grouping.jl")
 include("plotting.jl")
 
-## other things
+## basic utilities
 include("utils.jl")
 
 end # module
