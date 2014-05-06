@@ -38,4 +38,8 @@ include("plotting.jl")
 ## basic utilities
 include("utils.jl")
 
+## estimation
+include("estimation.jl")
+include("mu_sigma_estimation.jl")
+
 end # module

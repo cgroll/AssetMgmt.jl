@@ -1,4 +1,4 @@
-module testConstraints
+module testGrouping
 
 using Base.Test
 using DataFrames

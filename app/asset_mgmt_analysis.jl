@@ -22,6 +22,13 @@ sectorsStr = EconDatasets.dataset("Sectors")
 ## transform to discrete non-percentage returns
 discRet = exp(logRet/100).-1
 
+t = Task(() -> AssetMgmt.produceEmpiricalMoments(discRet, 4400))
+for x in t
+    println(x)
+end
+
+
+
 ## transform sector entries into symbols
 tickerSymbols = [symbol(symb) for symb in sectorsStr[:, 1]]
 sectorSymbols = [symbol(symb) for symb in sectorsStr[:, 2]]
