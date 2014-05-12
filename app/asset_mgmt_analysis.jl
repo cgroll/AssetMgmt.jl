@@ -31,7 +31,7 @@ responseFunc = AssetMgmt.gmv
 include("/home/chris/research/julia/EconDatasets/src/EconDatasets.jl")
 logRet = EconDatasets.dataset("SP500")
 sectorsStr = EconDatasets.dataset("Sectors")
-## interest rates
+intRates = AssetMgmt.getTBill()
 
 ## transform to discrete non-percentage returns
 discRetAll = exp(logRet/100).-1
@@ -63,14 +63,8 @@ invs = AssetMgmt.Investments(wgtsDf, idx(discRet)[dates])
 
 
 ## transform sector entries into symbols
-tickerSymbols = [symbol(symb) for symb in sectorsStr[:, 1]]
-sectorSymbols = [symbol(symb) for symb in sectorsStr[:, 2]]
-sectors = DataFrame()
-sectors[:ticker] = tickerSymbols
-sectors[:sector] = sectorSymbols
-
-## transform dataframe to dictionary
-sectDict = {sectors[ii, 1] => sectors[ii, 2] for ii=1:nAss}
+sectDict = {symbol(sectorsStr[ii, 1]) =>
+            symbol(sectorsStr[ii, 2]) for ii=1:nAss} 
 
 ## invert sector dictionary
 assetsInSector = AssetMgmt.invertDict(sectDict)
