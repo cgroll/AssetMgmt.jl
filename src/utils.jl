@@ -68,3 +68,50 @@ function makeWeights(matr::Array{Float64, 2})
     return matr
 end
 
+
+#################################
+## download interest rate data ##
+#################################
+
+function getTBill()
+    ## get Federal funds effective rate
+
+    tbillsURL =
+        "http://www.federalreserve.gov/datadownload/Output.aspx?rel=H15&series=646250c87b1afd04cc6774796fc0cec8&lastObs=&from=&to=&filetype=csv&label=include&layout=seriescolumn"
+
+
+    rawSplitted = download(tbillsURL) |>
+    readall |>
+    s -> split(s,"\r\n") |> # get individual lines
+    s -> map(l -> split(l, ","), s)     # decompose each line into
+                                        # dates and rates
+
+    maxNumberDates = length(rawSplitted)
+    dats = Array(Date{ISOCalendar}, maxNumberDates)
+    intRatesStr = Array(String, maxNumberDates)
+    skipLines = rep(false, maxNumberDates)
+
+    for ii=1:maxNumberDates
+        try
+            dats[ii] = date(rawSplitted[ii][1])
+            intRatesStr[ii] = rawSplitted[ii][2]
+            if intRatesStr[ii] == "ND"
+                skipLines[ii] = true
+                println("line ", ii, " skipped: no observation")
+            end
+        catch
+            println("line ", ii, " skipped: no date in line")
+            skipLines[ii] = true
+            continue
+        end
+    end
+
+    intRatesValid = intRatesStr[!skipLines]
+    intRates = Array(Float64, length(intRatesValid))
+    for ii=1:length(intRatesValid)
+        intRates[ii] = parsefloat(intRatesValid[ii])
+    end
+
+    intRatesDf = DataFrame(FEDrate = intRates)
+    return Timematr(intRatesDf, dats[!skipLines])
+end
