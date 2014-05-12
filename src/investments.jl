@@ -138,6 +138,16 @@ function Base.isequal(invs::Investments, invs2::Investments)
     return equ
 end
 
+##########
+## copy ##
+##########
+
+function Base.copy(invs::Investments)
+    copiedVals = copy(invs.vals)
+    copiedInvs = AssetMgmt.Investments(copiedVals, idx(invs))
+    return copiedInvs
+end
+
 ######################
 ## getindex methods ##
 ######################

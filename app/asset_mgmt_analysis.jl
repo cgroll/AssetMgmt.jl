@@ -70,114 +70,34 @@ sectors[:ticker] = tickerSymbols
 sectors[:sector] = sectorSymbols
 
 ## transform dataframe to dictionary
-
 sectDict = {sectors[ii, 1] => sectors[ii, 2] for ii=1:nAss}
 
-##########################################
-## define dictionary inverting function ##
-##########################################
-
-function invertDict(dict::Dict)
-    invDict = Dict()
-    for val in unique(values(dict))
-        ## for each possible value, find all keys
-        ## @show val
-        keysWithGivenValue = Array(Symbol, 0)
-        ## counter = 1
-        for key in dict
-            ## @show key
-            if key[2] == val
-                push!(keysWithGivenValue, key[1])
-                ## counter = counter + 1
-            end
-        end
-        invDict[val] = keysWithGivenValue
-    end
-    return invDict
-end
-
-#################################
-## define groupAssets function ##
-#################################
-
 ## invert sector dictionary
-assetsInSector = invertDict(sectDict)
+assetsInSector = AssetMgmt.invertDict(sectDict)
 
 ## get equally weighted portfolio wgts
 eqWgts = AssetMgmt.equWgtInvestments(discRet)
-sectorWgts = groupAssets(eqWgts, assetsInSector)
+sectorWgts = AssetMgmt.groupAssets(invs, assetsInSector)
 
-for group in assetsInSector
-    @show group
-end
-
-## find number of stocks per sector
-by(sectors, :sector, x -> size(x, 1))
+sectPerf = AssetMgmt.sectorPerformances(invs,
+                                        discRet[idx(invs), :],
+                                        assetsInSector)
 
 
-## get number of sectors
-nSectors = length(assetsInSector)
+#########################
+## sector performances ##
+#########################
 
-## get mean sector returns
-sectorRetsDf = DataFrame()
-for sect in assetsInSector
-    ## @show sect
-    @show sect
-    ## sectorData = logRet[sect[2]]
-    ## sectorMean = rowmeans(sectorData)
-    ## sectorRetsDf[convert(Symbol, sect[1])] = core(sectorMean)[:]
-end
 
-sectorRets = Timematr(sectorRetsDf, idx(logRet))
+eqWgtedSectorPortf = AssetMgmt.groupVars(discRet, assetsInSector,
+                                         x -> mean(x, 2))
+
 
 plot(x=[1:size(sectorRets, 1)], y=core(sectorRets)[:, 1])
 
 k = plot(x=rand(10), y=rand(10), Geom.line)
 
 k = AssetMgmt.plot(sectorRets)
-
-draw(PDF("myplot.pdf", 6inch, 3inch), k)
-
-energyRets = logRet[assetsInSector["Energy"]]
-
-symbs = convert(Array{Symbol, 1}, sectors[:, 1][:])
-
-
-
-for stock in sectDict
-    @show stock[2]
-end
-
-
-
-sectTuple = [(sectors[ii, 1], sectors[ii, 2]) 
-             for ii=1:size(sectors, 1) ]
-
-kk = Iterators.groupby(sectTuple, x -> x[2])
-for ii in kk
-    @show ii
-end
-
-for stock in sectDict
-    @show stock[2]
-end
-
-kk = groupby(sectDict, x -> x[2])
-
-
-for vals in values(sectDict)
-    @show vals
-end
-
-dictSymbs = convert(Dict, sectors)
-groupby(dictSymbs, dictSymbs)
-    
-smallData = logRet[1:10, :]
-
-
-
-for ii=1:size(smallData, 1)
-    
 
 
 ###################################
