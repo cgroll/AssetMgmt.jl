@@ -4,6 +4,7 @@ using TimeData
 using DataFrames
 using DataArrays
 using Gadfly
+using Datetime
 
 ##############################################################################
 ##

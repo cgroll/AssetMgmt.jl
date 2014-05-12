@@ -13,7 +13,7 @@ function plot(tm::Timematr, settings...)
     ## plot Timematr object
     ## - multi-line plot
     ## - index must be dates convertible to strings
-    ## - plot only some maximum of random paths
+    ## - plot only some maximum number of randomly picked paths
     ## - plot some statistics
     
     dats = AssetMgmt.datsAsStrings(tm)
@@ -79,10 +79,77 @@ function plotWithBMs(pfRets::Timematr, bmIndex...)
                    Guide.title("portfolio evolution with benchmarks")) 
 end
 
-function plotPfPerformance(wgts::Investments, discRet::Timematr,
+
+function plotStrategy(wgts::Investments,
+                      fltWgts::Investments,
+                      discRet::Timematr; 
+                      strName = :strategy)
+
+    ## plot performance indicators for strategy with fixed benchmarks 
+    (nObs, nAss) = size(discRet)
+
+    ## get portfolio returns for strategy
+    pfRet = AssetMgmt.invRet(wgts, discRet, name=strName)
+
+    ## create equally weighted investments as benchmark
+    eqInvs = AssetMgmt.equWgtInvestments(discRet);
+    eqRet = AssetMgmt.invRet(eqInvs, discRet, name=:equallyWeighted);
+    
+    ## get random portfolio returns as benchmarks
+    randInvs = AssetMgmt.randInvestments(discRet)
+    randRet1 = AssetMgmt.invRet(randInvs, discRet, name=:randPort1)
+    randInvs = AssetMgmt.randInvestments(discRet)
+    randRet2 = AssetMgmt.invRet(randInvs, discRet, name=:randPort2)
+
+    ############################
+    ## asset price evolutions ##
+    ############################
+
+    ## get cumulated prices for individual assets
+    cumPrices = log(cumprod(discRet .+ 1, 1))
+
+    pricePlot = AssetMgmt.plot(cumPrices, Guide.xlabel("time"),
+                               Guide.ylabel("price"),
+                               Guide.title("normalized asset prices"));
+
+    ################################################
+    ## portfolio price evolutions with benchmarks ##
+    ################################################
+
+    ## plot portfolio evolution with benchmarks
+    
+    bmPlot = AssetMgmt.plotWithBMs(pfRet, [eqRet randRet1 randRet2]);
+
+
+    #################################
+    ## plot returns and volatility ##
+    #################################
+
+    returnPlot = AssetMgmt.plot(pfRet, Guide.xlabel("time"),
+                                Guide.ylabel("return"),
+                                Guide.title("portfolio returns")); 
+
+    ## get squared portfolio returns as proxy for volatility
+    volaPlot = AssetMgmt.plot(pfRet.^2, Guide.xlabel("time"),
+                              Guide.ylabel("squared returns"),
+                              Guide.title("squared portfolio
+returns"));
+
+    ################################
+    ## putting the parts together ##
+    ################################
+
+    pfEvolution = vstack(pricePlot, bmPlot, returnPlot, volaPlot)
+    filename = string("pics/pfEvolution_", strName, ".pdf")
+    draw(PDF(filename, 10inch, 20inch), pfEvolution)
+end
+
+function plotPfPerformance(wgts::Investments,
+                           discRet::Timematr,
                            BMs...; 
                            strName = :strategy)
-
+    ## plot strategy performance indicators
+    
     display(BMs)
     
     (nObs, nAss) = size(discRet)
