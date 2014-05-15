@@ -2,19 +2,15 @@
 ## load packages ##
 ###################
 
-using TimeData
-## using Plotly
-## using Gadfly
-include("/home/chris/.julia/v0.3/Gadfly/src/Gadfly.jl")
-include("/home/chris/.julia/v0.3/AssetMgmt/src/AssetMgmt.jl")
-## using DateTime
+
+
 
 ########################
 ## specify parameters ##
 ########################
 
 ## choose starting point to pick subsample, maximum 4607
-cutoff = 4000
+cutoff = 1
 
 ## choose mu-sigma-estimator and parameters
 muSigmaEstimator = AssetMgmt.empiricalEstimator
@@ -24,18 +20,6 @@ rollingWindow = false
 ## choose response strategy
 responseFunc = AssetMgmt.gmv
 
-##############
-## get data ##
-##############
-
-include("/home/chris/research/julia/EconDatasets/src/EconDatasets.jl")
-logRet = EconDatasets.dataset("SP500")
-sectorsStr = EconDatasets.dataset("Sectors")
-intRates = AssetMgmt.getTBill()
-
-## transform to discrete non-percentage returns
-discRetAll = exp(logRet/100).-1
-discRet = discRetAll[cutoff:end, :]
 
 (nObs, nAss) = size(discRet)
 
@@ -61,13 +45,7 @@ end
 wgtsDf = AssetMgmt.composeDataFrame(wgts[dates, :], names(discRet))
 invs = AssetMgmt.Investments(wgtsDf, idx(discRet)[dates])
 
-
-## transform sector entries into symbols
-sectDict = {symbol(sectorsStr[ii, 1]) =>
-            symbol(sectorsStr[ii, 2]) for ii=1:nAss} 
-
-## invert sector dictionary
-assetsInSector = AssetMgmt.invertDict(sectDict)
+writeInvestments("data/emp_gmvWgts.csv", invs)
 
 ## get equally weighted portfolio wgts
 eqWgts = AssetMgmt.equWgtInvestments(discRet)
