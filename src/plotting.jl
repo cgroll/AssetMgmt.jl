@@ -57,12 +57,12 @@ end
 
 
 function plotWithBMs(pfRets::Timematr, bmIndex...) 
-    ## plot portfolio price evolution with benchmarks
+    ## plot portfolio price evolution for returns with benchmarks
     ##
     ## Inputs:
     ## 	pfRets 	nObs x 1 Timematr containing portfolio returns
     ## 	bmIndex	tuple of nObs x 1 Timematr objects containing time
-    ## 				series of benchmarks
+    ## 				series (returns) of benchmarks
 
     data = pfRets
     
@@ -79,85 +79,22 @@ function plotWithBMs(pfRets::Timematr, bmIndex...)
                    Guide.title("portfolio evolution with benchmarks")) 
 end
 
+function plotPriceReturnSeries(pfRets::Timematr,
+                               discRet::Timematr,
+                               BMs...;
+                               strName = :strategy)
 
-function plotStrategy(wgts::Investments,
-                      fltWgts::Investments,
-                      discRet::Timematr; 
-                      strName = :strategy)
-
-    ## plot performance indicators for strategy with fixed benchmarks 
-    (nObs, nAss) = size(discRet)
-
-    ## get portfolio returns for strategy
-    pfRet = AssetMgmt.invRet(wgts, discRet, name=strName)
-
-    ## create equally weighted investments as benchmark
-    eqInvs = AssetMgmt.equWgtInvestments(discRet);
-    eqRet = AssetMgmt.invRet(eqInvs, discRet, name=:equallyWeighted);
-    
-    ## get random portfolio returns as benchmarks
-    randInvs = AssetMgmt.randInvestments(discRet)
-    randRet1 = AssetMgmt.invRet(randInvs, discRet, name=:randPort1)
-    randInvs = AssetMgmt.randInvestments(discRet)
-    randRet2 = AssetMgmt.invRet(randInvs, discRet, name=:randPort2)
-
-    ############################
-    ## asset price evolutions ##
-    ############################
-
-    ## get cumulated prices for individual assets
-    cumPrices = log(cumprod(discRet .+ 1, 1))
-
-    pricePlot = AssetMgmt.plot(cumPrices, Guide.xlabel("time"),
-                               Guide.ylabel("price"),
-                               Guide.title("normalized asset prices"));
-
-    ################################################
-    ## portfolio price evolutions with benchmarks ##
-    ################################################
-
-    ## plot portfolio evolution with benchmarks
-    
-    bmPlot = AssetMgmt.plotWithBMs(pfRet, [eqRet randRet1 randRet2]);
-
-
-    #################################
-    ## plot returns and volatility ##
-    #################################
-
-    returnPlot = AssetMgmt.plot(pfRet, Guide.xlabel("time"),
-                                Guide.ylabel("return"),
-                                Guide.title("portfolio returns")); 
-
-    ## get squared portfolio returns as proxy for volatility
-    volaPlot = AssetMgmt.plot(pfRet.^2, Guide.xlabel("time"),
-                              Guide.ylabel("squared returns"),
-                              Guide.title("squared portfolio
-returns"));
-
-    ################################
-    ## putting the parts together ##
-    ################################
-
-    pfEvolution = vstack(pricePlot, bmPlot, returnPlot, volaPlot)
-    filename = string("pics/pfEvolution_", strName, ".pdf")
-    draw(PDF(filename, 10inch, 20inch), pfEvolution)
-end
-
-function plotPfPerformance(wgts::Investments,
-                           discRet::Timematr,
-                           BMs...; 
-                           strName = :strategy)
-    ## plot strategy performance indicators
-    
-    display(BMs)
+    ## plot price evolution of assets and portfolios
+    ## 
+    ## Inputs:
+    ## 	pfRets	nObs x 1 Timematr of portfolio returns
+    ## 	discRet 	nObs x nAss Timematr of discrete asset returns
+    ## 	BMs		nBms tuple of benchmark returns
+    ## 	strName	optional expression to label strategy in plots 
     
     (nObs, nAss) = size(discRet)
     nBMs = length(BMs)
     
-    ## get portfolio returns
-    pfRet = AssetMgmt.invRet(wgts, discRet, name=strName)
-
     ## get cumulated prices for individual assets
     cumPrices = cumprod(discRet .+ 1, 1)
 
@@ -174,21 +111,19 @@ function plotPfPerformance(wgts::Investments,
     ################################################
 
     ## plot portfolio evolution with benchmarks
-    ## display(typeof(BMs))
-    ## display(BMs)
-    bmPlot = AssetMgmt.plotWithBMs(pfRet, BMs...);
+    bmPlot = AssetMgmt.plotWithBMs(pfRets, BMs...);
 
 
     #################################
     ## plot returns and volatility ##
     #################################
 
-    returnPlot = AssetMgmt.plot(pfRet, Guide.xlabel("time"),
+    returnPlot = AssetMgmt.plot(pfRets, Guide.xlabel("time"),
                                 Guide.ylabel("return"),
                                 Guide.title("portfolio returns")); 
 
     ## get squared portfolio returns as proxy for volatility
-    volaPlot = AssetMgmt.plot(pfRet.^2, Guide.xlabel("time"),
+    volaPlot = AssetMgmt.plot(pfRets.^2, Guide.xlabel("time"),
                               Guide.ylabel("squared returns"),
                               Guide.title("squared portfolio
 returns")); 
@@ -200,23 +135,45 @@ returns"));
     pfEvolution = vstack(pricePlot, bmPlot, returnPlot, volaPlot)
     filename = string("pics/pfEvolution_", strName, ".pdf")
     draw(PDF(filename, 10inch, 20inch), pfEvolution)
+end
 
-    ###################
-    ## plot turnover ##
-    ###################
+function plotTOverDiversification(rawInvs::Investments,
+                                  fltInvs::Investments,
+                                  discRet::Timematr;
+                                  ## sectors::Dict; 
+                                  strName = :strategy)
+
+    ## plot intended and realized turnover and diversification
+    ## measures 
+    ##
+    ## Inputs:
+    ## 	rawInvs	nObs x nAss unfiltered Investments
+    ## 	fltInvs	nObs x nAss turnover reducing Investments
+    ## 	discRet	nObs x nAss Timematr of discrete asset returns
+    ## 	sectors	nSect x 1 Dictionary of assets per sector
+    ## 	strName	optional: expression with strategy name for plot
+    ## 				labeling 
+
+    ##############
+    ## turnover ##
+    ##############
 
     ## get investment turnover
-    tOver = AssetMgmt.turnover(wgts, discRet)
-    intTOver = AssetMgmt.intendedTurnover(wgts)
+    tOver = AssetMgmt.turnover(fltInvs, discRet)
+    intTOver = AssetMgmt.turnover(rawInvs, discRet)
 
     tOData = [tOver intTOver]
     
     tOPlot = AssetMgmt.plot(tOData, Guide.xlabel("time"),
                Guide.ylabel("turnover"),
-               Guide.title("actual turnover vs intended turnover")); 
+               Guide.title("actual turnover vs intended turnover"));
+
+    ##############################
+    ## diversification measures ##
+    ##############################
 
     ## get diversification measures
-    divIndicators = AssetMgmt.diversification(wgts)
+    divIndicators = AssetMgmt.diversification(fltInvs)
 
     ## plot diversification measures related to number of assets
     divNAssets = divIndicators[[:nAss, :nSignAss, :nShort]]
@@ -233,7 +190,17 @@ returns"));
     divPlot = vstack(tOPlot, divNAssetsPlot, divFractionsPlot)
     filename = string("pics/pfDiversif_", strName, ".pdf")
     draw(PDF(filename, 10inch, 12inch), divPlot)
+end
+    
+function plotPfDistribution(pfRet::Timematr,
+                            discRet::Timematr,
+                            BMs...; 
+                            strName = :strategy)
+    ## plot strategy performance indicators
 
+    (nObs, nAss) = size(discRet)
+    nBMs = length(BMs)
+    
     #################################
     ## portfolio return statistics ##
     #################################
