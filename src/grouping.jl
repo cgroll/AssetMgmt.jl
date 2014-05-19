@@ -104,6 +104,17 @@ end
 function sectorPerformances(invs::Investments, discRet::Timematr,
                            assetsInSector::Dict{Any, Any})
     ## calculate (normalized) sector return
+    ## for each sector, pretend that one is only invested in this
+    ## sector. hence, relative weights within sector are rescaled, and
+    ## the result is the performance of the sector if one is invested
+    ## according to the proportions chosen by the larger investment
+    ## strategy. this could be compared to sector performances with
+    ## equal weights: does chosen strategy chose assets within each
+    ## sector sophisticated enough to improve sector performance?
+    ##
+    ## PROBLEM: how to cope with situations where all weights of a
+    ## given sector are negative? what would be the associated
+    ## normalization? 
     ##
     ## Inputs:
     ## 	invs 				nObs x nAss Investments of portfolio weights

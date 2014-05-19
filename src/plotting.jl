@@ -220,7 +220,7 @@ function plotPfDistribution(pfRet::Timematr,
     for ii=1:nBMs
         ## currBM = Timematr(BMs[ii].vals, idx(BMs[ii]))
         currBM = BMs[ii]
-        title = string(string(names(currBM)), " return distribution")
+        title = string(string(names(currBM)[1]), " return distribution")
         retStats = AssetMgmt.returnStatistics(currBM)
         distrPlots[ii+1] = plot(currBM.vals, x=string(names(currBM.vals)[1]),
                              xintercept = [retStats.mu, retStats.VaR95, retStats.VaR99],
@@ -298,3 +298,71 @@ function plotPfDistribution(pfRet::Timematr,
 
 end
 
+function plotSectorAnalysis(fltInvs::Investments,
+                            discRet::Timematr,
+                            assetsInSector::Dict; 
+                            strName = :strategy)
+
+        ## get mean sector return series
+    sectorReturns = AssetMgmt.groupVars(discRet,
+                                        assetsInSector,
+                                        x -> mean(x, 2))
+
+    ## get sector means and vars
+    mus = mean(core(sectorReturns)*100, 1)
+    sigmas = std(core(sectorReturns)*100, 1)
+
+    ## get sector weights
+    sectorWgts = mean(core(AssetMgmt.groupAssets(fltInvs, assetsInSector)),
+                      1) 
+    absWgts = abs(sectorWgts)
+    longAssets = 1*(sectorWgts .> 0)
+
+    df = DataFrame()
+    nams = [string(names(sectorReturns)[ii]) for ii=1:length(mus)]
+    df[:names] = nams
+    df[:mus] = mus[:]
+    df[:sigmas] = sigmas[:]
+    df[:absWgts] = absWgts[:]
+    df[:weights] = sectorWgts[:]
+    df[:long] = longAssets[:]
+
+    muSigmaPlot = plot(layer(df, x="sigmas",
+                             y="mus",
+                             color="weights", Geom.point),
+                       layer(df, x="sigmas", y="mus",
+                             label="names", Geom.label),
+                       Guide.xlabel("sigma"),
+                       Guide.ylabel("mu"),
+                       Guide.title("sector weights with sector moments")
+                       )
+    
+    ## get weights for each sector
+    sectorWgts = AssetMgmt.groupAssets(fltInvs, assetsInSector)
+
+    title = string(string(strName), " portfolio sector weights")
+    sectorWgtsPlot = AssetMgmt.plot(convert(Timematr, sectorWgts), 
+                                    Guide.xlabel("time"),
+                                    Guide.ylabel("sector weight"),
+                                    Guide.title(title))
+
+    scaledSectorWgts = DataFrame()
+    for eachSector in assetsInSector
+        nAssPerSector = length(eachSector[2])
+        sectorName = eachSector[1]
+        scaledSectorWgts[sectorName] =
+            (core(sectorWgts[sectorName]) ./ nAssPerSector)[:]
+    end
+    scaledSectorWgtsTm = Timematr(scaledSectorWgts, idx(fltInvs))
+
+    title = string(string(strName), " average asset weight per sector")
+    averageWgtsPlot = AssetMgmt.plot(scaledSectorWgtsTm,
+                                     Guide.xlabel("time"),
+                                     Guide.ylabel("average weight"),
+                                     Guide.title(title))
+
+    sectPlots = vstack(muSigmaPlot, sectorWgtsPlot, averageWgtsPlot)
+    filename = string("pics/pfSectors_", strName, ".pdf")
+    draw(PDF(filename, 10inch, 20inch), sectPlots)
+
+end
