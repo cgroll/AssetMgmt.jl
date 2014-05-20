@@ -11,7 +11,9 @@ function subsampleProducer(nObs, minObs; rolling=false)
     ##
     ## Outputs:
     ## 	(begInd, endInd) tuple of start and end indices of subsample,
-    ## 	with last subsample ending at second last index
+    ## 	with last subsample ending at second last index, since
+    ## 	estimated values of given subsample can only be used for the
+    ## 	strategy at the next day
     
     for ii=minObs:(nObs-1)
         if rolling
