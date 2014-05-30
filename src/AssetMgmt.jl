@@ -5,6 +5,7 @@ using DataFrames
 using DataArrays
 using Gadfly
 using Datetime
+using NLopt
 
 ##############################################################################
 ##
@@ -43,5 +44,8 @@ include("io.jl")
 ## estimation
 include("estimation.jl")
 include("mu_sigma_estimation.jl")
+
+## EGARCH
+include("egarch.jl")
 
 end # module

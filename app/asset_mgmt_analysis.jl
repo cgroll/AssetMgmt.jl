@@ -2,11 +2,23 @@
 ## load packages ##
 ###################
 
+using NLopt
+using Distributions
+using TimeData
 
+include("/home/chris/.julia/v0.3/AssetMgmt/src/AssetMgmt.jl")
 
+dat = core(discRet)[:, 310]
 
+(minf, minx, ret) = AssetMgmt.egarchfit(dat)
+volas = AssetMgmt.getVola(dat, minx)
 
+volaTd = Timematr(volas, idx(discRet))
 
+kk = AssetMgmt.plot(volaTd)
+display(kk)
+
+draw(PNG("/home/chris/volas.png", 10inch, 10inch), kk)
 
 ## enlargen default plot size
 set_default_plot_size(24cm, 14cm)
