@@ -5,7 +5,7 @@ using DataFrames
 using DataArrays
 using Gadfly
 using Datetime
-using NLopt
+#using NLopt
 
 ##############################################################################
 ##
