@@ -2,7 +2,13 @@
 ## symbol / string conversion functions ##
 ##########################################
 
+function symbToStr(symbs::Array{Symbol, 1})
+    return UTF8String[string(symb) for symb in symbs]
+end
 
+function strToSymb(strs::Array{UTF8String, 1})
+    return Symbol[symbol(xx) for xx in strs]
+end
 
 #######################
 ## scaling functions ##

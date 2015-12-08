@@ -38,6 +38,7 @@ include("universeEstimate.jl")
 include("initialStrategies.jl")
 include("strategies.jl")
 include("utils.jl")
+include("plotting.jl")
 
 ## include("constraints.jl")
 ## include("investments.jl")
