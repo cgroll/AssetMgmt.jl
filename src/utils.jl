@@ -1,3 +1,36 @@
+##########################################
+## symbol / string conversion functions ##
+##########################################
+
+
+
+#######################
+## scaling functions ##
+#######################
+
+## Note: initialized without any scaling by now
+## Problem: mus should not be scaled linearly, as discrete returns may
+## not be aggregated over time linearly. A better way might be to make
+## a distributional assumption (log-normal) and scale geometric means
+## (or arithmetic means for log returns)
+
+function scaleMu(mu::Float64; scalingFactor = 52)
+    return mu
+end
+
+function scaleMu(mus::Array{Float64, 1}; scalingFactor = 52)
+    return Float64[scaleMu(xx) for xx in mus]
+end
+
+function scaleVola(vola::Float64; scalingFactor = 52)
+    return vola
+end
+
+function scaleVola(volas::Array{Float64, 1}; scalingFactor = 52)
+    return Float64[scaleVola(xx) for xx in volas]
+end
+
+
 ####################################
 ## statistic functions DataFrames ##
 ####################################
@@ -23,37 +56,37 @@ end
 ## create random weights matrix ##
 ##################################
 
-function randWgts(nObs::Int, nAss::Int)
-    ## create random weights
-    ##
-    ## Output:
-    ## 	nObs x nAss Array{Float64,2} containing portfolio weights in
-    ## 	each row
+## function randWgts(nObs::Int, nAss::Int)
+##     ## create random weights
+##     ##
+##     ## Output:
+##     ## 	nObs x nAss Array{Float64,2} containing portfolio weights in
+##     ## 	each row
     
-    simVals = rand(nObs, nAss)
-    rowsums = sum(simVals, 2)
-    wgts = simVals ./ repmat(rowsums, 1, nAss)
-end
+##     simVals = rand(nObs, nAss)
+##     rowsums = sum(simVals, 2)
+##     wgts = simVals ./ repmat(rowsums, 1, nAss)
+## end
 
 ###############################################
 ## check matching investment and return data ##
 ###############################################
 
-function chkMatchInvData(invs::Investments, discRet::Timematr)
-    ## test whether investments and return data are matching
-    ##
-    ## Output: error when inputs don't match
+## function chkMatchInvData(invs::Investments, discRet::Timematr)
+##     ## test whether investments and return data are matching
+##     ##
+##     ## Output: error when inputs don't match
 
-    ## check for conforming dates and assets
-    if AssetMgmt.idx(invs) != idx(discRet)
-        error("indices / dates of investments and returns must
-coincide")
-    end
+##     ## check for conforming dates and assets
+##     if AssetMgmt.idx(invs) != idx(discRet)
+##         error("indices / dates of investments and returns must
+## coincide")
+##     end
 
-    if AssetMgmt.names(invs) != names(discRet)
-        error("asset names of investments and returns must coincide")
-    end
-end
+##     if AssetMgmt.names(invs) != names(discRet)
+##         error("asset names of investments and returns must coincide")
+##     end
+## end
 
 ##################################################
 ## normalize matrix values to represent weights ##

@@ -1,3 +1,10 @@
+
+
+
+####################
+## old code below ##
+####################
+
 function subsampleProducer(nObs, minObs; rolling=false)
     ## produce indices for changing subsamples over time
     ##
