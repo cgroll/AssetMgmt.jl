@@ -159,3 +159,78 @@ function fitModel(::Type{ExpWeighted}, data::Timematr, dat::Date;
     end
 end
 
+###########################
+## get moments over time ##
+###########################
+
+macro getTimeVaryingMomentsForMuSigmaModels(myType)
+    esc(quote
+        function getTimeVaryingMoments(modType::Type{$myType},
+                                       data::Timematr)
+            ## get all days
+            allDats = idx(data)
+            
+            ## preallocation
+            nObs, nAss = size(data)
+            musOverTime = DataArray(Float64, nObs, nAss)
+            sigmasOverTime = DataArray(Float64, nObs, nAss)
+            nCovs = int((nAss)*(nAss-1)/2)
+            corrOverTime = DataArray(Float64, nObs, nCovs)
+            
+            for ii=1:length(allDats)
+                thisDat = allDats[ii]
+                
+                ## estimate moments
+                mod = AssetMgmt.fitModel(modType, data, thisDat)
+                
+                ## extract mus and sigmas
+                if AssetMgmt.isDef(mod)
+                    musOverTime[ii, :] = mod.mu'
+                    sigmasOverTime[ii, :] =
+                        (Float64[sqrt(mod.sigma[jj, jj]) for jj=1:nAss])'
+                    
+                    ## get correlation matrix
+                    d = diagm(1./sqrt(diag(mod.sigma)))
+                    corrMatr = d*mod.sigma*d
+                    
+                    ## extract correlations
+                    corrs = vcat([corrMatr[(jj+1:end), jj] for jj=1:(nAss-1)]...)
+                    corrOverTime[ii, :] = corrs'
+                end
+            end
+            
+            ## transform to Timenum
+            dfMus = DataFrame()
+            dfSigmas = DataFrame()
+            for ii=1:nAss
+                thisNam = names(data)[ii]
+                dfMus[thisNam] = musOverTime[:, ii]
+                dfSigmas[thisNam] = sigmasOverTime[:, ii]
+            end
+
+            dfCorrs = DataFrame()
+            for ii=1:size(corrOverTime, 2)
+                dfCorrs[ii] = corrOverTime[:, ii]
+            end
+    
+            musOverTimeTd = Timenum(dfMus, idx(data))
+            sigmasOverTimeTd = Timenum(dfSigmas, idx(data))
+            corrOverTimeTd = Timenum(dfCorrs, idx(data))
+            return (musOverTimeTd, sigmasOverTimeTd, corrOverTimeTd)
+        end
+
+        function hcat(inst::$(myType), inst2::$(myType))
+            ## check for equal indices
+            if idx(inst) != idx(inst2)
+                error("indices must coincide for hcat")
+            end
+            
+            instNew = $(myType)(hcat(inst.vals, inst2.vals), idx(inst))
+            return instNew
+        end
+    end)
+end
+
+for t = (:(SampleMoments), :(ExpWeighted))
+    eval(macroexpand(:(@getTimeVaryingMomentsForMuSigmaModels($t))))
+end

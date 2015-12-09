@@ -15,8 +15,8 @@ function plotAssetMoments(mod::MuSigmaModel; legendName::String = "automaticName
     nams = AssetMgmt.symbToStr(mod.names)
 
     ## get moments as DataFrame for join
-    momentsTable = DataFrame(Asset = nams, mu = mus*100,
-                             sigma = sigmas*100)
+    momentsTable = DataFrame(Asset = nams, mu = mus,
+                             sigma = sigmas)
 
     if legendName == "automaticName"
         p = plot(momentsTable, x="sigma", y="mu", color="Asset",

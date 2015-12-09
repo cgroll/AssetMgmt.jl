@@ -20,6 +20,63 @@ end
 ## a distributional assumption (log-normal) and scale geometric means
 ## (or arithmetic means for log returns)
 
+function grossRetMomentsToLogRetMoments(mu::Float64, sigma::Float64)
+    ## arithmetic moments R to r^{log}
+    
+    ## calculate log variance
+    varLog = log(1 + sigma^2/mu^2)
+    muLog = log(mu) - 0.5*varLog
+    sigmaLog = sqrt(varLog)
+
+    return muLog, sigmaLog
+end
+
+function logRetMomentsToGrossRetMoments(muLog::Float64,
+                                        sigmaLog::Float64)
+    ## logarithmic moments r^{log} to R
+    mu = exp(muLog + 0.5*sigmaLog^2)
+    varGross = (exp(sigmaLog^2) - 1)*exp(2*muLog + sigmaLog^2)
+
+    return mu, sqrt(varGross)
+end
+
+function defaultMuSigmaScaling(mu::Float64, sigma::Float64;
+                               scalingFactor = 52)
+    ## - annualized arithmetic mean and sigma shown
+    ## - via annualized log moments
+    ## - percentage values
+    ## Assumptions:
+    ## - log-normality to get log moments
+    ## - independence over time for square-root-of-time scaling
+    ## - constant weights over time
+    ## - constant moments over time
+
+    ## net to gross
+    muGross = mu + 1
+
+    ## get log moments
+    muLog, sigmaLog = grossRetMomentsToLogRetMoments(muGross, sigma)
+
+    ## annualize log moments
+    muLogAnnual = muLog*scalingFactor
+    sigmaLogAnnual = sqrt(scalingFactor)*sigmaLog
+
+    ## translate to gross moments
+    muGrossAnnual, sigmaAnnual =
+        logRetMomentsToGrossRetMoments(muLogAnnual,
+                                       sigmaLogAnnual)
+
+    ## translate to net returns
+    muNetAnnual = muGrossAnnual - 1
+
+    ## translate to percentages
+    muNetAnnualPercent = muNetAnnual * 100
+    sigmaAnnualPercent = sigmaAnnual * 100
+
+    return muNetAnnualPercent, sigmaAnnualPercent
+end
+    
+
 function scaleMu(mu::Float64; scalingFactor = 52)
     return mu
 end
