@@ -1,24 +1,6 @@
-##########################################
-## symbol / string conversion functions ##
-##########################################
-
-function symbToStr(symbs::Array{Symbol, 1})
-    return UTF8String[string(symb) for symb in symbs]
-end
-
-function strToSymb(strs::Array{UTF8String, 1})
-    return Symbol[symbol(xx) for xx in strs]
-end
-
-#######################
-## scaling functions ##
-#######################
-
-## Note: initialized without any scaling by now
-## Problem: mus should not be scaled linearly, as discrete returns may
-## not be aggregated over time linearly. A better way might be to make
-## a distributional assumption (log-normal) and scale geometric means
-## (or arithmetic means for log returns)
+############################
+## grossMomentsLogMoments ##
+############################
 
 function grossRetMomentsToLogRetMoments(mu::Float64, sigma::Float64)
     ## arithmetic moments R to r^{log}
@@ -39,6 +21,16 @@ function logRetMomentsToGrossRetMoments(muLog::Float64,
 
     return mu, sqrt(varGross)
 end
+
+#######################
+## scaling functions ##
+#######################
+
+## Note: initialized without any scaling by now
+## Problem: mus should not be scaled linearly, as discrete returns may
+## not be aggregated over time linearly. A better way might be to make
+## a distributional assumption (log-normal) and scale geometric means
+## (or arithmetic means for log returns)
 
 function defaultMuSigmaScaling(mu::Float64, sigma::Float64;
                                scalingFactor = 52)
@@ -75,30 +67,44 @@ function defaultMuSigmaScaling(mu::Float64, sigma::Float64;
 
     return muNetAnnualPercent, sigmaAnnualPercent
 end
-    
 
-function scaleMu(mu::Float64; scalingFactor = 52)
-    return mu
+
+## applied to vectors
+function defaultMuSigmaScaling(mus::Array{Float64, 1},
+                               sigmas::Array{Float64, 1};
+                               scalingFactor = 52)
+    ## preallocation
+    nMoments = size(mus, 1)
+    scaledMus = ones(nMoments)
+    scaledSigmas = ones(nMoments)
+
+    for ii=1:nMoments
+        thisMu, thisSigma =
+            defaultMuSigmaScaling(mus[ii], sigmas[ii])
+        scaledMus[ii] = thisMu
+        scaledSigmas[ii] = thisSigma
+    end
+    return scaledMus, scaledSigmas
 end
 
-function scaleMu(mus::Array{Float64, 1}; scalingFactor = 52)
-    return Float64[scaleMu(xx) for xx in mus]
+##########################################
+## symbol / string conversion functions ##
+##########################################
+
+function symbToStr(symbs::Array{Symbol, 1})
+    return UTF8String[string(symb) for symb in symbs]
 end
 
-function scaleVola(vola::Float64; scalingFactor = 52)
-    return vola
+function strToSymb(strs::Array{UTF8String, 1})
+    return Symbol[symbol(xx) for xx in strs]
 end
-
-function scaleVola(volas::Array{Float64, 1}; scalingFactor = 52)
-    return Float64[scaleVola(xx) for xx in volas]
-end
-
 
 ####################################
 ## statistic functions DataFrames ##
 ####################################
 
-function Base.mean(df::DataFrame, int::Integer)
+import Base.mean
+function mean(df::DataFrame, int::Integer)
     if int==2
         error("for row-wise mean, use rowmean instead")
     else
@@ -106,7 +112,8 @@ function Base.mean(df::DataFrame, int::Integer)
     end
 end
 
-function Base.cov(df::DataFrame)
+import Base.cov
+function cov(df::DataFrame)
     return DataFrame(cov(array(df)), names(df))
 end
 
