@@ -57,14 +57,16 @@ end
 ## estimate ##
 ##############
 
-function estimate(t::Type{SampleMoments}, data::Timematr, dat::Date)
-    ## estimate model and create UniverseEstimate instance
-    modFit = fitModel(t, data, dat)
-    return MuSigmaUniverse(modFit, dat, data)
+macro defineEstimateForMuSigmaModel(myType)
+    esc(quote
+        function estimate(t::Type{$myType}, data::Timematr, dat::Date)
+            ## estimate model and create UniverseEstimate instance
+            modFit = fitModel(t, data, dat)
+            return MuSigmaUniverse(modFit, dat, data)
+        end
+    end)
 end
 
-function estimate(t::Type{ExpWeighted}, data::Timematr, dat::Date)
-    ## estimate model and create UniverseEstimate instance
-    modFit = fitModel(t, data, dat)
-    return MuSigmaUniverse(modFit, dat, data)
+for t = (:(SampleMoments), :(MovWinSampleMoments), :(ExpWeighted))
+    eval(macroexpand(:(@defineEstimateForMuSigmaModel($t))))
 end
