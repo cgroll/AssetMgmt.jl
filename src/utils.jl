@@ -99,6 +99,40 @@ function strToSymb(strs::Array{UTF8String, 1})
     return Symbol[symbol(xx) for xx in strs]
 end
 
+#######################
+## calculate moments ##
+#######################
+
+## single portfolio, single universe
+function getPMean(wgts::Array{Float64, 1}, mus::Array{Float64, 1})
+    return (wgts'*mus)[1]
+end
+
+## multiple portfolios, single universe
+function getPMean(wgts::Array{Float64, 2}, mus::Array{Float64, 1})
+    nPfs = size(wgts, 1)
+    pfMus = ones(nPfs)
+    for ii=1:nPfs
+        pfMus[ii] = getPMean(wgts[ii, :][:], mus)
+    end
+    return pfMus
+end
+
+## single portfolio, single universe
+function getPVar(wgts::Array{Float64, 1}, covMatr::Array{Float64, 2})
+    return (wgts'*covMatr*wgts)[1]
+end
+
+## multiple portfolios, single universe
+function getPVar(wgts::Array{Float64, 2}, covMatr::Array{Float64, 2})
+    nPfs = size(wgts, 1)
+    pfVariances = ones(nPfs)
+    for ii=1:nPfs
+        pfVariances[ii] = getPVar(wgts[ii, :][:], covMatr)
+    end
+    return pfVariances
+end
+
 ####################################
 ## statistic functions DataFrames ##
 ####################################

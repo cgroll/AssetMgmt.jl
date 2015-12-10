@@ -116,6 +116,80 @@ function plotAssetMoments(mod::MuSigmaModel;
 end
 
 
+## plot efficient frontier
+##------------------------
+
+function plotEff(mod::MuSigmaModel;
+                 scalingFunc = AssetMgmt.defaultMuSigmaScaling,
+                 nPoints = 50)
+
+    ## extract and scale moments
+    sigmas = AssetMgmt.getVolas(mod)
+    scaledMus, scaledSigmas = scalingFunc(mod.mu, sigmas)
+    
+    ## calculate efficient frontier moments
+    muEffUnscaled, sigmaEffUnscaled =
+        getEffFrontier(mod, nPoints = nPoints)
+
+    ## scale efficient frontier
+    muEff, sigmaEff =
+        scalingFunc(muEffUnscaled, sigmaEffUnscaled)
+    
+    p = plot(layer(x=sigmaEff, y=muEff, Geom.line),
+             layer(x=scaledSigmas, y=scaledMus, Geom.point));
+
+    return p
+end
+
+
+## plot asset and portfolio moments
+##---------------------------------
+
+function plotPfsAndUniverse(mod::MuSigmaModel,
+                            wgts = Array{Float64, 2};
+                            scalingFunc::Function = AssetMgmt.defaultMuSigmaScaling)
+    ## portfolios should be given in rows
+
+    ## extract and scale moments
+    sigmas = AssetMgmt.getVolas(mod)
+    scaledMus, scaledSigmas = scalingFunc(mod.mu, sigmas)
+
+    ## get type names
+    typNams = UTF8String["asset" for ii=1:length(sigmas)]
+    
+    ## get asset moments as DataFrame
+    assetMomentsTable = DataFrame(mu = scaledMus,
+                                  sigma = scaledSigmas,
+                                  color = typNams)
+
+    ## get portfolio moments
+    muPfs = AssetMgmt.getPMean(wgts, mod.mu)
+    sigmaPfs = sqrt(AssetMgmt.getPVar(wgts, mod.sigma))
+
+    ## scale portfolio moments
+    scaledMuPfs, scaledSigmaPfs =
+        scalingFunc(muPfs, sigmaPfs)
+
+    ## get type names
+    typNams = UTF8String["portfolio" for ii=1:length(sigmaPfs)]
+
+    ## get portfolio moments as DataFrame
+    pfMomentsTable = DataFrame(mu = scaledMuPfs,
+                               sigma = scaledSigmaPfs,
+                               color = typNams)
+
+    ## join tables
+    momentsTable = [assetMomentsTable; pfMomentsTable]
+
+    p = plot(momentsTable, x="sigma", y="mu",
+             color="color",
+             Geom.point, Guide.title("μ-σ diagram"), 
+             Guide.xlabel("σ"), Guide.ylabel("μ"));
+    
+    return p
+end
+
+
 ## import Gadfly.plot
 ## function plot(tm::Timematr, settings...)
 ##     ## plot Timematr object
