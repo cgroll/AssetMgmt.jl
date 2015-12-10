@@ -1,11 +1,13 @@
 module runtests
 
-tests = ["ttconstraints.jl",
+tests = [## "ttconstraints.jl",
          ## "moments.jl",
-         "ttinvestments.jl",
+         ## "ttinvestments.jl",
          ## "portfolio.jl",
          "ttutils.jl",
-         "ttstrategies.jl"]
+         ## "ttstrategies.jl",
+         "ttuniverseModels.jl"
+         ]
 
 for t in tests
     include(string(Pkg.dir("AssetMgmt"), "/test/", t))
