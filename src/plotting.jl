@@ -1,69 +1,116 @@
-#################################
-## visualize mu-sigma universe ##
-#################################
+##################################
+## visualize colored line paths ##
+##################################
 
-function plotAssetMoments(mod::MuSigmaModel; legendName::String = "automaticName")
-    ## get number of asset
-    nAss = size(mod.mu, 1)
+function gdfGroupPlot(tn::AbstractTimenum;
+                      variableInfo::DataFrame = DataFrame(),
+                      joinCol::Symbol = :AssetLabel,
+                      colorCol::Symbol = :AssetClass,
+                      legendName::String = "automatic")
 
-    ## extract and scale moments
-    mus = AssetMgmt.scaleMu(mod.mu)
-    diagSigmas = Float64[mod.sigma[ii, ii] for ii=1:nAss]
-    sigmas = AssetMgmt.scaleVola(diagSigmas)
+    ## get variable names
+    nams = names(tn)
 
-    ## convert symbol names to strings for join
-    nams = AssetMgmt.symbToStr(mod.names)
+    ## standard data manipulation:
+    ## remove / replace NAs, convert dates
+    tn = narowrm(tn)
+    vals = asArr(tn, Float64, NaN) # NA to NaN
+    dats = dat2num(tn)
+    df = composeDataFrame([dats vals], [:Idx; nams])
+    stackedData = stack(df, nams)
 
-    ## get moments as DataFrame for join
-    momentsTable = DataFrame(Asset = nams, mu = mus,
-                             sigma = sigmas)
+    ## transform asset label symbols to UTF8Strings for join
+    stackedData[:variable] = symbToStr(stackedData[:variable])
+    
+    # rename column name
+    rename!(stackedData, :variable, joinCol)
 
-    if legendName == "automaticName"
-        p = plot(momentsTable, x="sigma", y="mu", color="Asset",
-                 Geom.point, Guide.title("μ-σ diagram"), 
-                 Guide.xlabel("σ"), Guide.ylabel("μ"));
+    # join asset class
+    subInfo = variableInfo[:, [joinCol, colorCol]]
+    xx = join(stackedData, subInfo, on = joinCol)
+
+    if legendName == "automaticName" # automatic legend name
+        p = plot(xx, x="Idx", y="value",
+                 group=joinCol, color=colorCol,
+                 Geom.line)
     else
-        p = plot(momentsTable, x="sigma", y="mu", color="Asset",
-                 Geom.point, Guide.title("μ-σ diagram"), 
-                 Guide.xlabel("σ"), Guide.ylabel("μ"),
-                 Guide.colorkey(legendName));
+        p = plot(xx, x="Idx", y="value",
+                 group=joinCol, color=colorCol,
+                 Geom.line,
+                 Guide.colorkey(legendName))
     end
     return p
 end
 
-function plotAssetMoments(mod::MuSigmaModel, assetInfo::DataFrame;
+
+#################################
+## visualize mu-sigma universe ##
+#################################
+
+function plotAssetMoments(mod::MuSigmaModel;
+                          scalingFunc::Function = AssetMgmt.defaultMuSigmaScaling,
+                          assetInfo::DataFrame = DataFrame(),
                           joinCol::Symbol = :AssetLabel,
-                          colCol::Symbol = :AssetClass,
+                          colorCol::Symbol = :AssetClass,
                           legendName::String = "automaticName")
+    ## Visualize return moments.
+    ## Return moments are scaled according to some given function.
+    ## Also, points can be colored with respect to additional
+    ## information. 
+    
+    ## check for extended asset info
+    extendedInfo = true
+    if isempty(assetInfo)
+        extendedInfo = false
+    end
     
     ## get number of asset
     nAss = size(mod.mu, 1)
 
     ## extract and scale moments
-    mus = AssetMgmt.scaleMu(mod.mu)
-    diagSigmas = Float64[mod.sigma[ii, ii] for ii=1:nAss]
-    sigmas = AssetMgmt.scaleVola(diagSigmas)
+    sigmas = getVolas(mod)
+    scaledMus, scaledSigmas = scalingFunc(mod.mu, sigmas)
 
     ## convert symbol names to strings for join
     nams = AssetMgmt.symbToStr(mod.names)
 
-    ## get moments as DataFrame for join
-    momentsTable = DataFrame(joinVar = nams, mu = mus*100,
-                             sigma = sigmas*100)
-    rename!(momentsTable, :joinVar, joinCol)
+    ## get moments as DataFrame
+    momentsTable = DataFrame(Asset = nams, mu = scaledMus,
+                             sigma = scaledSigmas)
 
-    ## conduct join
-    momentsTableExt = join(momentsTable, assetInfo, on = joinCol)
+    if extendedInfo # append additional asset info
+        rename!(momentsTable, :Asset, joinCol)
 
-    if legendName == "automaticName" # automatic legend name
-        p = plot(momentsTableExt, x="sigma", y="mu", color=colCol,
-                 Geom.point, Guide.title("μ-σ diagram"), 
-                 Guide.xlabel("σ"), Guide.ylabel("μ"));
-    else
-        p = plot(momentsTableExt, x="sigma", y="mu", color=colCol,
-                 Geom.point, Guide.title("μ-σ diagram"), 
-                 Guide.xlabel("σ"), Guide.ylabel("μ"),
-                 Guide.colorkey(legendName));
+        ## conduct join
+        momentsTable = join(momentsTable, assetInfo, on = joinCol)
+    end
+
+    if extendedInfo # special coloring 
+        if legendName == "automaticName" # automatic legend name
+            p = plot(momentsTable, x="sigma", y="mu",
+                     color=colorCol,
+                     Geom.point, Guide.title("μ-σ diagram"), 
+                     Guide.xlabel("σ"), Guide.ylabel("μ"));
+        else
+            p = plot(momentsTable, x="sigma", y="mu",
+                     color=colorCol,
+                     Geom.point, Guide.title("μ-σ diagram"), 
+                     Guide.xlabel("σ"), Guide.ylabel("μ"),
+                     Guide.colorkey(legendName));
+        end
+    else # no special coloring
+        if legendName == "automaticName"
+            p = plot(momentsTable, x="sigma", y="mu",
+                     color="Asset",
+                     Geom.point, Guide.title("μ-σ diagram"), 
+                     Guide.xlabel("σ"), Guide.ylabel("μ"));
+        else
+            p = plot(momentsTable, x="sigma", y="mu",
+                     color="Asset",
+                     Geom.point, Guide.title("μ-σ diagram"), 
+                     Guide.xlabel("σ"), Guide.ylabel("μ"),
+                     Guide.colorkey(legendName));
+        end
     end
     return p
 end
