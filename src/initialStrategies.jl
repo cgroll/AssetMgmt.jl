@@ -59,32 +59,25 @@ end
 ## optimize ##
 ##############
 
+
 function optimizeWgts(mod::MuSigmaUniverse, s::MinSigma)
-    
+    nAss = size(mod.Data, 2)
+
+    ## get return moments
+    covMatr = mod.Universe.sigma
+
+    a, b, c, d = getFundamentals(mod)
+
+    ## get target mu
+    targetMu = s.mu
     
 end
 
 function optimizeWgts(mod::MuSigmaUniverse, s::MaxMu)
     
-    
 end
 
+
 function optimizeWgts(mod::MuSigmaUniverse, s::GMVSS)
-    nAss = size(mod.Data, 2)
-
-    ## get return moments
-    mus = mod.Universe.mu
-    covMatr = mod.Universe.sigma
-
-    ## get helper matrices
-    onesN = ones(nAss,1)
-    a = ones(1, nAss)/covMatr*ones(nAss, 1)
-    b = ones(1, nAss)/covMatr*mus
-    c = mus'/covMatr*mus
-    d = a*c-b^2
-    
-    ## compute GMV weights
-    xGMV = covMatr\ones(1, nAss)/a
-
-    return xGMV
+    return getGMVSS(mod)
 end
