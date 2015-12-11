@@ -60,17 +60,10 @@ end
 ##############
 
 
-function optimizeWgts(mod::MuSigmaUniverse, s::MinSigma)
-    nAss = size(mod.Data, 2)
+function optimizeWgts(univ::MuSigmaUniverse, s::MinSigma)
+    muTarget = s.mu
 
-    ## get return moments
-    covMatr = mod.Universe.sigma
-
-    a, b, c, d = getFundamentals(mod)
-
-    ## get target mu
-    targetMu = s.mu
-    
+    return getEffPfGivenMu(univ.Universe, muTarget)
 end
 
 function optimizeWgts(mod::MuSigmaUniverse, s::MaxMu)
