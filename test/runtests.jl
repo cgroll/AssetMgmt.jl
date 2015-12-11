@@ -6,6 +6,7 @@ tests = [## "ttconstraints.jl",
          ## "portfolio.jl",
          "ttutils.jl",
          ## "ttstrategies.jl",
+         "ttmuSigmaFunctions.jl",
          "ttuniverseModels.jl"
          ]
 
