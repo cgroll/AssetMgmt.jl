@@ -20,7 +20,7 @@ type Investments{T}
 
         ## check constraints
         TimeData.chkIdx(idx)
-        TimeData.chkNum(vals)           # numeric values only?
+        TimeData.chkNumDf(vals)           # numeric values only?
         chkEqualsOne(vals)
 
         ## check equal number of rows

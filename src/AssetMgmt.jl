@@ -41,8 +41,8 @@ include("utils.jl")
 include("plotting.jl")
 include("muSigmaFunctions.jl")
 
-## include("constraints.jl")
-## include("investments.jl")
+include("constraints.jl")
+include("investments.jl")
 
 ## ## define strategies
 ## include("strategies.jl")
