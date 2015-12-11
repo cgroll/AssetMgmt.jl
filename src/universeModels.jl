@@ -140,13 +140,17 @@ end
 ## estimators ##
 ################
 
+## no estimator may use data of the given date itself!!
+## One could think of the estimator as a forecast for the given date
+## made in the morning, hence using data only up to there.
+
 ## sample moments
 ##---------------
 
 function fitModel(::Type{SampleMoments}, data::Timematr, dat::Date;
                   minObs::Int = 50)
     ## extract data up to given date
-    validDates = idx(data) .<= dat
+    validDates = idx(data) .< dat
 
     if sum(validDates) < minObs
         return SampleMoments()
@@ -163,7 +167,7 @@ function fitModel(::Type{MovWinSampleMoments},
                   data::Timematr,
                   dat::Date; windSize::Int = 50)
     ## extract data up to given date
-    validDates = idx(data) .<= dat
+    validDates = idx(data) .< dat
 
     if sum(validDates) < windSize
         return MovWinSampleMoments()
@@ -181,13 +185,13 @@ function fitModel(::Type{MovWinSampleMoments},
 end
 
 function fitModel(::Type{ExpWeighted}, data::Timematr, dat::Date;
-                  minObs::Int = 5, lambda = 0.96)
+                  minObs::Int = 50, lambda = 0.96)
     if (lambda < 0) | (1 < lambda)
         error("lambda must be in (0, 1)")
     end
 
     ## extract data up to given date
-    validDates = idx(data) .<= dat
+    validDates = idx(data) .< dat
 
     if sum(validDates) < minObs
         return ExpWeighted()
