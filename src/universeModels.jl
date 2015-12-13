@@ -219,19 +219,20 @@ end
 ## get moments over time ##
 ###########################
 
-macro getTimeVaryingMomentsForMuSigmaModels(myType)
+macro defineApplyMuSigmaModelEstimators(myType)
     esc(quote
-        function getTimeVaryingMoments(modType::Type{$myType},
-                                       data::Timematr)
+        function applyMuSigmaModelEstimator(modType::Type{$myType},
+                                            data::Timematr)
             ## get all days
             allDats = idx(data)
             
             ## preallocation
             nObs, nAss = size(data)
-            musOverTime = DataArray(Float64, nObs, nAss)
-            sigmasOverTime = DataArray(Float64, nObs, nAss)
+            musOverTime = Array(Float64, nObs, nAss)
+            sigmasOverTime = Array(Float64, nObs, nAss)
             nCovs = int((nAss)*(nAss-1)/2)
-            corrOverTime = DataArray(Float64, nObs, nCovs)
+            corrOverTime = Array(Float64, nObs, nCovs)
+            modelEstimated = falses(nObs)
             
             for ii=1:length(allDats)
                 thisDat = allDats[ii]
@@ -241,6 +242,9 @@ macro getTimeVaryingMomentsForMuSigmaModels(myType)
                 
                 ## extract mus and sigmas
                 if AssetMgmt.isDef(mod)
+                    ## set estimation indicator to true
+                    modelEstimated[ii] = true
+                    
                     musOverTime[ii, :] = mod.mu'
                     sigmasOverTime[ii, :] =
                         (Float64[sqrt(mod.sigma[jj, jj]) for jj=1:nAss])'
@@ -254,8 +258,13 @@ macro getTimeVaryingMomentsForMuSigmaModels(myType)
                     corrOverTime[ii, :] = corrs'
                 end
             end
+
+            ## remove non-estimatable dates
+            musOverTime = musOverTime[modelEstimated, :]
+            sigmasOverTime = sigmasOverTime[modelEstimated, :]
+            corrOverTime = corrOverTime[modelEstimated, :]
             
-            ## transform to Timenum
+            ## transform to Timematr
             dfMus = DataFrame()
             dfSigmas = DataFrame()
             for ii=1:nAss
@@ -268,10 +277,11 @@ macro getTimeVaryingMomentsForMuSigmaModels(myType)
             for ii=1:size(corrOverTime, 2)
                 dfCorrs[ii] = corrOverTime[:, ii]
             end
-    
-            musOverTimeTd = Timenum(dfMus, idx(data))
-            sigmasOverTimeTd = Timenum(dfSigmas, idx(data))
-            corrOverTimeTd = Timenum(dfCorrs, idx(data))
+
+            dats = idx(data)[modelEstimated]
+            musOverTimeTd = Timematr(dfMus, dats)
+            sigmasOverTimeTd = Timematr(dfSigmas, dats)
+            corrOverTimeTd = Timematr(dfCorrs, dats)
             return (musOverTimeTd, sigmasOverTimeTd, corrOverTimeTd)
         end
 
@@ -279,5 +289,5 @@ macro getTimeVaryingMomentsForMuSigmaModels(myType)
 end
 
 for t = (:(SampleMoments), :(MovWinSampleMoments), :(ExpWeighted))
-    eval(macroexpand(:(@getTimeVaryingMomentsForMuSigmaModels($t))))
+    eval(macroexpand(:(@defineApplyMuSigmaModelEstimators($t))))
 end

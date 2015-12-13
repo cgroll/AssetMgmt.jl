@@ -60,17 +60,16 @@ end
 ##############
 
 
-function optimizeWgts(univ::MuSigmaUniverse, s::MinSigma)
+function optimizeWgts(s::MinSigma, univ::MuSigmaUniverse)
     muTarget = s.mu
 
     return getEffPfGivenMu(univ.Universe, muTarget)
 end
 
-function optimizeWgts(mod::MuSigmaUniverse, s::MaxMu)
+function optimizeWgts(s::MaxMu, mod::MuSigmaUniverse)
     
 end
 
-
-function optimizeWgts(mod::MuSigmaUniverse, s::GMVSS)
+function optimizeWgts(s::GMVSS, mod::MuSigmaUniverse)
     return getGMVSS(mod)
 end
