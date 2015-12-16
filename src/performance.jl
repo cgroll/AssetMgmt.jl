@@ -18,7 +18,7 @@ function invRet(invs::Investments, discRet::Timematr; name = :pRet)
     AssetMgmt.chkMatchInvData(invs,discRet)
     
     wgts = AssetMgmt.core(invs)
-    rets = core(discRet)
+    rets = core(discRet[idx(invs), :])
 
     portRet = AssetMgmt.invRetCore(wgts, rets)
     invDf = DataFrame(pfRet = portRet[:])
@@ -26,7 +26,7 @@ function invRet(invs::Investments, discRet::Timematr; name = :pRet)
     ## rename portfolio return according to strategy name
     rename!(invDf, names(invDf), [name])
 
-    return Timematr(invDf, idx(discRet))
+    return Timematr(invDf, idx(invs))
 end
 
 function invRetCore(wgts::Array{Float64,2}, rets::Array{Float64,2})
@@ -86,13 +86,16 @@ function evolWgts(invs::Investments, discRet::Timematr)
 
     chkMatchInvData(invs, discRet)
 
+    ## get returns on dates of investments
+    relevantRets = discRet[idx(invs), :]
+
     weightsDueToPriceChanges = evolWgtsCore(AssetMgmt.core(invs),
-                                            core(discRet)) 
+                                            core(relevantRets)) 
 
     wgtsPriceChanges = composeDataFrame(weightsDueToPriceChanges,
                                         names(discRet)) 
     
-    return AssetMgmt.Investments(wgtsPriceChanges, idx(discRet))
+    return AssetMgmt.Investments(wgtsPriceChanges, idx(invs))
 end
 
 
@@ -114,28 +117,67 @@ function turnover(invs::Investments, discRet::Timematr)
     ## Output:
     ## 	nObs x 1 Timematr of daily portfolio turnover
 
-    AssetMgmt.chkMatchInvData(invs,discRet)
-    invsArr = AssetMgmt.core(invs)
-
     ## get automatic daily changes of weights
     wgtsPriceChanges = evolWgts(invs, discRet)
+
+    ## get values without metadata
+    invsArr = AssetMgmt.core(invs)
     wgtsPriceChangesArr = AssetMgmt.core(wgtsPriceChanges)
-    
+
+    ## preallocate turnover
     nObs = size(invs, 1)
     tOver = zeros(nObs, 1)
 
-    for ii=2:nObs
-        tOver[ii, 1] = sum(abs(invsArr[ii, :] - wgtsPriceChangesArr[ii-1, :]))
+    ## get trading days
+    tradingIndices = find(isTradingDay(invs, discRet))
+
+    ## skip first day
+    tradingIndices = tradingIndices[2:end]
+    
+    for iDay in tradingIndices
+        tOver[iDay, 1] =
+            sum(abs(invsArr[iDay, :] -
+                    wgtsPriceChangesArr[iDay-1, :]))
     end
 
+    ## return turnover as Timematr
     tOverDf = DataFrame()
     tOverDf[:turnOver] = tOver[:]
-    return Timematr(tOverDf, idx(discRet))
+    return Timematr(tOverDf, idx(invs))
 end
 
-function intendedTurnover(invs::Investments)
-    ## calculate turnover due to intended rebalancing without
-    ## consideration of weight evolutions
+function intendedTurnover(invs::Investments, discRet::Timematr)
+    ## intended turnover is the difference between morning weights of
+    ## a trading day and the last trading day. should equal
+    ## weightFluctuations if applied to initialStrategies.
+
+    ## get values without metadata
+    invsArr = AssetMgmt.core(invs)
+
+    ## preallocate turnover
+    nObs = size(invs, 1)
+    tOver = zeros(nObs, 1)
+
+    ## get trading days
+    tradingIndices = find(isTradingDay(invs, discRet))
+
+    for ii=2:length(tradingIndices)
+        currTradingDay = tradingIndices[ii]
+        lastTradingDay = tradingIndices[ii-1]
+        tOver[currTradingDay, 1] =
+            sum(abs(invsArr[currTradingDay, :] -
+                    invsArr[lastTradingDay, :]))
+    end
+
+    ## return turnover as Timematr
+    tOverDf = DataFrame()
+    tOverDf[:turnOver] = tOver[:]
+    return Timematr(tOverDf, idx(invs))
+end
+
+function weightFluctuations(invs::Investments)
+    ## calculate absolute weight changes for "morning" weights - no
+    ## consideration of weight changes due to price changes
     ##
     ## Inputs:
     ## 	invs 		nObs x nAss portfolio weights intended to occur

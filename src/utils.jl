@@ -95,7 +95,19 @@ function symbToStr(symbs::Array{Symbol, 1})
     return UTF8String[string(symb) for symb in symbs]
 end
 
+function symbToStr(symbs::DataArray{Symbol, 1})
+    return UTF8String[string(symb) for symb in symbs]
+end
+
 function strToSymb(strs::Array{UTF8String, 1})
+    return Symbol[symbol(xx) for xx in strs]
+end
+
+function strToSymb(strs::DataArray{UTF8String, 1})
+    return Symbol[symbol(xx) for xx in strs]
+end
+
+function strToSymb(strs::DataArray{String, 1})
     return Symbol[symbol(xx) for xx in strs]
 end
 
@@ -170,26 +182,6 @@ end
 ##     simVals = rand(nObs, nAss)
 ##     rowsums = sum(simVals, 2)
 ##     wgts = simVals ./ repmat(rowsums, 1, nAss)
-## end
-
-###############################################
-## check matching investment and return data ##
-###############################################
-
-## function chkMatchInvData(invs::Investments, discRet::Timematr)
-##     ## test whether investments and return data are matching
-##     ##
-##     ## Output: error when inputs don't match
-
-##     ## check for conforming dates and assets
-##     if AssetMgmt.idx(invs) != idx(discRet)
-##         error("indices / dates of investments and returns must
-## coincide")
-##     end
-
-##     if AssetMgmt.names(invs) != names(discRet)
-##         error("asset names of investments and returns must coincide")
-##     end
 ## end
 
 ##################################################
