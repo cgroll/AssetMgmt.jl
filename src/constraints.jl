@@ -22,7 +22,7 @@ function chkEqualsOne(x::Array{Float64, 2})
 end
 
 function chkEqualsOne(df::DataFrame)
-    rowSums = sum(array(df), 2)
+    rowSums = sum(convert(Array, df), 2)
 
     if any(abs(rowSums .- 1) .> precision)
         error("weights must sum to one")
