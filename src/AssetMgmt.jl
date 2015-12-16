@@ -35,25 +35,25 @@ SeparateTurnover
 ## define basic investment type and type constraints
 include("universeModels.jl")
 include("universeEstimate.jl")
-include("initialStrategies.jl")
-include("strategies.jl")
 include("utils.jl")
-include("plotting.jl")
+include("initialStrategies.jl")
 include("muSigmaFunctions.jl")
 
 include("constraints.jl")
 include("investments.jl")
+include("plotting.jl")
+
+## define filters
+include("tOv_filters.jl")
 
 ## ## define strategies
-## include("strategies.jl")
+include("strategies.jl")
 ## include("markowitz.jl")
 ## include("moments.jl")
 
-## ## define filters
-## include("tOv_filters.jl")
 
 ## ## performance analysis
-## include("performance.jl")
+include("performance.jl")
 ## include("diversification.jl")
 ## include("grouping.jl")
 ## include("plotting.jl")
