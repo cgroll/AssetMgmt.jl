@@ -91,6 +91,11 @@ function size(invs::Investments, ind::Int)
     return size(invs.vals, ind)
 end
 
+import Base.ndims
+function ndims(invs::Investments)
+    return ndims(invs.vals)
+end
+
 #####################
 ## get investments ##
 #####################
@@ -101,7 +106,7 @@ end
 
 import TimeData.core
 function core(invs::Investments)
-    return array(invs.vals)
+    return convert(Array, invs.vals)
 end
 
 ###############
@@ -122,15 +127,45 @@ end
 ## convert ##
 #############
 
-function Base.convert(Timematr, invs::Investments)
-    return Timematr(invs.vals, AssetMgmt.idx(invs))
+import Base.convert
+function convert(::Type{Timematr}, invs::Investments)
+    return Timematr(invs.vals, idx(invs))
+end
+
+function convert(::Type{DataFrame}, invs::Investments)
+    return [DataFrame(idx = invs.idx) invs.vals]
+end
+
+## asArr
+##------
+
+import TimeData.asArr
+function asArr(invs::Investments)
+    return convert(Array, invs.vals)
+end
+
+########
+## IO ##
+########
+
+function readInvestments(filename::String)
+    td = readTimedata(filename)
+    return Investments(td.vals, idx(td))
+end
+
+function writeInvestments(filename::String, invs::Investments)
+    ## create large dataframe
+    idxDf = DataFrame(idx = idx(invs));
+    df = [idxDf invs.vals];
+    writetable(filename, df)
 end
 
 #############
 ## isequal ##
 #############
 
-function Base.isequal(invs::Investments, invs2::Investments)
+import Base.isequal
+function isequal(invs::Investments, invs2::Investments)
     typeEqu = isequal(typeof(invs), typeof(invs2))
     valsEqu = isequal(invs.vals, invs2.vals)
     idxEqu = isequal(invs.idx, invs2.idx)
@@ -146,6 +181,72 @@ function Base.copy(invs::Investments)
     copiedVals = copy(invs.vals)
     copiedInvs = AssetMgmt.Investments(copiedVals, idx(invs))
     return copiedInvs
+end
+
+###############################################
+## check matching investment and return data ##
+###############################################
+
+function chkMatchInvData(invs::Investments, discRet::Timematr)
+    ## test whether investments and return data are matching
+    ##
+    ## Matching: all investement dates are entailed in return data
+    ## dates.
+    ##
+    ## Output: error when inputs don't match
+
+    ## check for conforming dates and assets
+    if !issubset(idx(invs), idx(discRet))
+        error("indices / dates of investments must be contained in
+    dates of return data")
+    end
+
+    if AssetMgmt.names(invs) != names(discRet)
+        error("asset names of investments and returns must coincide")
+    end
+end
+
+#######################################
+## find trading days for investments ##
+#######################################
+
+function isTradingDay(invs::Investments, discRet::Timematr)
+    ## most changes in investment weights are caused by simple price
+    ## changes without actual trading. This function finds all days
+    ## with active rebalancing of weights. If evening weights
+    ## (achieved through price changes) deviate from next day morning
+    ## weights, next day will be called trading day.
+    ##
+    ## return dates may deviate from investment dates as long as all
+    ## investment dates are also contained in return dates.
+    ##
+    ## trading day indicators are returned for all investment dates.
+
+    ## get automatic daily changes of weights
+    wgtsPriceChanges = evolWgts(invs, discRet)
+
+    ## get values without metadata
+    invsArr = AssetMgmt.core(invs)
+    wgtsPriceChangesArr = AssetMgmt.core(wgtsPriceChanges)
+
+    ## preallocate trading indicator
+    nObs = size(invs, 1)
+    isTrading = falses(nObs)
+
+    ## first day is defined as trading day
+    isTrading[1] = true
+
+    for ii=2:nObs
+        ## get weight changes from evening weights last day to morning
+        ## weights of current day
+        wgtChange =
+            sum(abs(invsArr[ii, :] - wgtsPriceChangesArr[ii-1, :]))
+        if wgtChange > 1e-12
+            isTrading[ii] = true
+        end
+    end
+    
+    return isTrading
 end
 
 ######################
